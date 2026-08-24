@@ -95,6 +95,65 @@ demo on your own machine and not fine anywhere else.
 | `ROOM_BOOKINGS` | Who is in which room, between which dates |
 | `COMPLAINTS` | What a customer complained about, when, and whether it was resolved |
 
+```mermaid
+erDiagram
+    HOTELS          ||--o{ HOTEL_AMENITIES : "offers"
+    HOTELS          ||..o{ HOTEL_ROOMS     : "has - no FK"
+    HOTELS          ||--o{ ROOM_BOOKINGS   : "is booked"
+    HOTEL_ROOMS     ||--o{ ROOM_BOOKINGS   : "is let as"
+    CUSTOMERS       ||--o{ ROOM_BOOKINGS   : "books"
+    CUSTOMERS       ||--o{ COMPLAINTS      : "raises"
+
+    HOTELS {
+        VARCHAR2 HOTEL_NAME      PK
+        VARCHAR2 REGION_NAME
+        NUMBER   STAR_RATING     "1 digit"
+        NUMBER   CUSTOMER_RATING "1 decimal place"
+    }
+
+    HOTEL_AMENITIES {
+        VARCHAR2 HOTEL_NAME          PK "FK, cascades"
+        VARCHAR2 AMENITY_NAME        PK "must be upper case"
+        VARCHAR2 AMENITY_DESCRIPTION
+        VARCHAR2 CHARGABLE_Y_OR_N    "Y or N"
+    }
+
+    HOTEL_ROOMS {
+        VARCHAR2 HOTEL_NAME            PK
+        NUMBER   ROOM_NUMBER           PK
+        VARCHAR2 ROOM_SPECIAL_FEATURES "the only nullable column"
+    }
+
+    CUSTOMERS {
+        VARCHAR2 CUSTOMER_NAME PK
+        VARCHAR2 PHONE_NUMBER  UK
+        VARCHAR2 EMAIL_ADDRESS UK "must contain an @"
+    }
+
+    ROOM_BOOKINGS {
+        NUMBER   BOOKING_ID    PK "booking_id_seq"
+        VARCHAR2 HOTEL_NAME    FK "with ROOM_NUMBER, cascades"
+        NUMBER   ROOM_NUMBER   FK
+        VARCHAR2 CUSTOMER_NAME FK
+        DATE     START_DATE    "midnight, before END_DATE"
+        DATE     END_DATE      "midnight, the day they leave"
+    }
+
+    COMPLAINTS {
+        NUMBER   COMPLAINT_ID    PK "complaint_id_seq"
+        VARCHAR2 CUSTOMER_NAME   FK
+        DATE     COMPLAINT_DATE  "defaults to today"
+        VARCHAR2 COMPLAINT_TEXT
+        VARCHAR2 RESOLVED_Y_OR_N "defaults to N"
+    }
+```
+
+`HOTEL_ROOMS` is the one join drawn with a dotted line, because it is the one
+that is not enforced: it shares `HOTEL_NAME` with `HOTELS` but has no foreign key
+back to it, so a room in a hotel that does not exist is currently possible.
+`ROOM_BOOKINGS` reaches `HOTEL_ROOMS` on both columns at once, and separately
+carries its own foreign key to `HOTELS`.
+
 Two views summarise the reference data: `HOTEL_REGIONS` aggregates ratings by
 region, and `HOTEL_AMENITIES_SUMMARY` gives the percentage of hotels that charge
 for each amenity.
