@@ -35,7 +35,8 @@ CREATE TABLE "CUSTOMERS"
        "EMAIL_ADDRESS"  VARCHAR2(80 BYTE) NOT NULL ENABLE,
        CONSTRAINT "CUSTOMERS_PK" PRIMARY KEY ("CUSTOMER_NAME")
        USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255,
-       CONSTRAINT "CUSTOMERS_EMAIL_HAS_AT" CHECK (EMAIL_ADDRESS LIKE '%@%') ENABLE);
+       CONSTRAINT "CUSTOMERS_EMAIL_HAS_AT" CHECK (INSTR(EMAIL_ADDRESS,'@') > 1
+          AND INSTR(EMAIL_ADDRESS,'@') < LENGTH(EMAIL_ADDRESS)) ENABLE);
 
 CREATE UNIQUE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
 
@@ -99,7 +100,8 @@ AS
    v_customer CUSTOMERS%ROWTYPE := p_customer;
    v_existing CUSTOMERS%ROWTYPE;
 
-   c_needs_at CONSTANT VARCHAR2(60) := ' is not a valid email address, it needs an @';
+   c_needs_at CONSTANT VARCHAR2(100) :=
+      ' is not a valid email address, it needs an @ with text on both sides';
 
    -- ORA-02290: a check constraint was violated
    e_check_violated EXCEPTION;
@@ -139,7 +141,8 @@ BEGIN
 
    -- Checked here as well as by CUSTOMERS_EMAIL_HAS_AT, so that the caller
    -- gets a sentence rather than an ORA-02290
-   IF INSTR(v_customer.email_address,'@') = 0 THEN
+   IF INSTR(v_customer.email_address,'@') <= 1
+   OR INSTR(v_customer.email_address,'@') = LENGTH(v_customer.email_address) THEN
       p_message := 'Email address ' || v_customer.email_address || c_needs_at;
       RETURN;
    END IF;

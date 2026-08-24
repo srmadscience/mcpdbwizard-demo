@@ -62,7 +62,8 @@ ALTER TABLE customers MODIFY
        "EMAIL_ADDRESS"  NOT NULL);
 
 ALTER TABLE customers ADD CONSTRAINT "CUSTOMERS_EMAIL_HAS_AT"
-   CHECK (EMAIL_ADDRESS LIKE '%@%') ENABLE;
+   CHECK (INSTR(EMAIL_ADDRESS,'@') > 1
+      AND INSTR(EMAIL_ADDRESS,'@') < LENGTH(EMAIL_ADDRESS)) ENABLE;
 
 -- Built after the backfill so each index is populated in one pass
 
