@@ -30,7 +30,9 @@ CREATE TABLE "HOTEL_ROOMS"
 CREATE INDEX "HOTEL_ROOMS_ROOM_IDX" ON "HOTEL_ROOMS" ("ROOM_NUMBER");
 
 CREATE TABLE "CUSTOMERS"
-   (   "CUSTOMER_NAME" VARCHAR2(20 BYTE) NOT NULL ENABLE,
+   (   "CUSTOMER_NAME"  VARCHAR2(20 BYTE) NOT NULL ENABLE,
+       "PHONE_NUMBER"   VARCHAR2(20 BYTE),
+       "EMAIL_ADDRESS"  VARCHAR2(80 BYTE),
        CONSTRAINT "CUSTOMERS_PK" PRIMARY KEY ("CUSTOMER_NAME")
        USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255);
 
@@ -84,3 +86,60 @@ GROUP BY AMENITY_NAME;
 CREATE SEQUENCE "BOOKING_ID_SEQ" MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 10000 CACHE 20 NOORDER NOCYCLE NOKEEP NOSCALE GLOBAL;
 
 CREATE SEQUENCE complaint_id_seq;
+
+CREATE OR REPLACE PROCEDURE UPSERT_CUSTOMER
+   ( p_customer IN  CUSTOMERS%ROWTYPE
+   , p_message  OUT VARCHAR2 )
+AS
+   v_customer CUSTOMERS%ROWTYPE := p_customer;
+   v_existing CUSTOMERS%ROWTYPE;
+
+   -- NULL safe comparison, so that two NULLs count as 'unchanged'
+   FUNCTION unchanged(p_old IN VARCHAR2, p_new IN VARCHAR2) RETURN BOOLEAN IS
+   BEGIN
+      RETURN (p_old IS NULL     AND p_new IS NULL)
+          OR (p_old IS NOT NULL AND p_new IS NOT NULL AND p_old = p_new);
+   END unchanged;
+
+BEGIN
+
+   -- Customer names are always stored in upper case
+   v_customer.customer_name := UPPER(TRIM(p_customer.customer_name));
+
+   IF v_customer.customer_name IS NULL THEN
+      p_message := 'A customer name is required';
+      RETURN;
+   END IF;
+
+   BEGIN
+
+      SELECT *
+      INTO   v_existing
+      FROM   customers
+      WHERE  customer_name = v_customer.customer_name
+      FOR UPDATE;
+
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+
+      INSERT INTO customers VALUES v_customer;
+      p_message := 'Created customer ' || v_customer.customer_name;
+      RETURN;
+
+   END;
+
+   IF unchanged(v_existing.phone_number,  v_customer.phone_number)
+   AND unchanged(v_existing.email_address, v_customer.email_address) THEN
+      p_message := 'This customer already exists';
+   ELSE
+      UPDATE customers
+      SET    ROW = v_customer
+      WHERE  customer_name = v_customer.customer_name;
+
+      p_message := 'Updated customer ' || v_customer.customer_name;
+   END IF;
+
+EXCEPTION WHEN DUP_VAL_ON_INDEX THEN
+   -- Another session inserted the same customer between our SELECT and INSERT
+   p_message := 'This customer already exists';
+END UPSERT_CUSTOMER;
+/

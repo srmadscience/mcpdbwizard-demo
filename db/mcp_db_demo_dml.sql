@@ -95,19 +95,19 @@ insert into hotel_rooms values ('BELAFONTE BERTH',1002,'The cross section cabin.
 insert into hotel_rooms values ('BELAFONTE BERTH',1003,null);
 insert into hotel_rooms values ('BELAFONTE BERTH',1004,null);
 
-INSERT INTO customers VALUES ('M GUSTAVE');
-INSERT INTO customers VALUES ('ZERO MOUSTAFA');
-INSERT INTO customers VALUES ('AGATHA');
-INSERT INTO customers VALUES ('SUZY BISHOP');
-INSERT INTO customers VALUES ('SAM SHAKUSKY');
-INSERT INTO customers VALUES ('STEVE ZISSOU');
-INSERT INTO customers VALUES ('KLAUS DAIMLER');
-INSERT INTO customers VALUES ('FRANCIS WHITMAN');
-INSERT INTO customers VALUES ('AUGIE STEENBECK');
-INSERT INTO customers VALUES ('ROEBUCK WRIGHT');
-INSERT INTO customers VALUES ('MARGOT TENENBAUM');
-INSERT INTO customers VALUES ('MR FOX');
-INSERT INTO customers VALUES ('HERMAN BLUME');
+INSERT INTO customers VALUES ('M GUSTAVE','+36 1 555 0101','m.gustave@grandbudapest.zz');
+INSERT INTO customers VALUES ('ZERO MOUSTAFA','+36 1 555 0102','zero.moustafa@grandbudapest.zz');
+INSERT INTO customers VALUES ('AGATHA','+36 1 555 0103','agatha@mendls.zz');
+INSERT INTO customers VALUES ('SUZY BISHOP','+1 401 555 0110','suzy.bishop@newpenzance.zz');
+INSERT INTO customers VALUES ('SAM SHAKUSKY','+1 401 555 0111','sam.shakusky@khakiscouts.zz');
+INSERT INTO customers VALUES ('STEVE ZISSOU','+33 4 555 0120','steve.zissou@belafonte.zz');
+INSERT INTO customers VALUES ('KLAUS DAIMLER','+49 30 555 0121','klaus.daimler@belafonte.zz');
+INSERT INTO customers VALUES ('FRANCIS WHITMAN','+91 141 555 0130','francis.whitman@darjeeling.zz');
+INSERT INTO customers VALUES ('AUGIE STEENBECK','+1 505 555 0140','augie.steenbeck@asteroidcity.zz');
+INSERT INTO customers VALUES ('ROEBUCK WRIGHT','+33 1 555 0150','roebuck.wright@frenchdispatch.zz');
+INSERT INTO customers VALUES ('MARGOT TENENBAUM','+1 212 555 0160','margot.tenenbaum@tenenbaum.zz');
+INSERT INTO customers VALUES ('MR FOX','+44 20 555 0170','mr.fox@foxholdings.zz');
+INSERT INTO customers VALUES ('HERMAN BLUME','+1 713 555 0180','herman.blume@blumeintl.zz');
 
 INSERT INTO room_bookings VALUES (booking_id_seq.nextval,'GRAND BUDAPEST','M GUSTAVE',300,DATE '2026-01-12',DATE '2026-01-19');
 INSERT INTO room_bookings VALUES (booking_id_seq.nextval,'GRAND BUDAPEST','ZERO MOUSTAFA',301,DATE '2026-01-12',DATE '2026-02-28');
