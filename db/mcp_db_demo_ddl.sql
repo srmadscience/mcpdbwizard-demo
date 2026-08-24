@@ -295,3 +295,137 @@ BEGIN
 
 END HOTEL_OCCUPANCY;
 /
+
+create or replace PACKAGE room_manager AS
+--
+TYPE RoomCursor IS REF CURSOR RETURN hotel_rooms%ROWTYPE;
+TYPE BookingCursor IS REF CURSOR RETURN room_bookings%ROWTYPE;
+--
+PROCEDURE  getRoomList
+   ( p_hotel_name IN  VARCHAR2 
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_results    OUT RoomCursor
+   , p_message    OUT VARCHAR2);
+--
+PROCEDURE BookRoom
+   ( p_hotel_name IN  VARCHAR2 
+   , p_customer_name IN VARCHAR2
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_room_count IN NATURAL
+   , BookingCursor OUT BookingCursor
+   , p_message    OUT VARCHAR2);
+--
+END;
+/
+
+create or replace PACKAGE BODY room_manager AS
+--
+PROCEDURE  getRoomList
+   ( p_hotel_name IN  VARCHAR2 
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_results    OUT RoomCursor
+   , p_message    OUT VARCHAR2) AS
+--
+BEGIN
+--
+p_message := 'Looking for availablity for '||p_hotel_name||p_from_date||' to '||p_to_date;
+--
+IF p_hotel_name IS NULL OR LTRIM(RTRIM(p_hotel_name)) = 0 THEN
+--
+  p_message := 'Hotel Name Needed';
+--
+ELSIF p_from_date IS NULL THEN
+--
+  p_message := 'From Date Needed';
+--
+ELSIF p_to_date IS NULL THEN
+--
+  p_message := 'To Date Needed';
+--
+ELSE 
+--
+  OPEN p_results FOR
+  select r.hotel_name, r.room_number , r.room_special_features
+  from hotel_rooms r
+  WHERE r.hotel_name = UPPER(LTRIM(RTRIM(p_hotel_name))) 
+  AND   not exists (select null
+                  from room_bookings b
+                  WHERE b.hotel_name = r.hotel_name
+                  AND   b.room_number = r.room_number                
+                  AND  
+                        (   (b.start_date >= p_from_date AND b.end_date <= p_to_date)  -- bookings inside our booking...
+                         OR (b.start_date <= p_from_date AND b.end_date >= p_to_date)  -- bookings absorbing our booking...
+                         OR (b.start_date >= p_from_date AND b.end_date >= p_from_date) -- conflict with start
+                         OR (b.start_date <= p_to_date AND b.end_date >= p_to_date) ) ) -- conflict with end
+  ORDER BY room_number;
+--
+END IF;
+--
+END;
+--
+PROCEDURE BookRoom
+   ( p_hotel_name IN  VARCHAR2 
+   , p_customer_name IN VARCHAR2
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_room_count IN NATURAL
+   , BookingCursor OUT BookingCursor
+   , p_message    OUT VARCHAR2) IS
+--
+l_room_cursor RoomCursor;
+l_room_message varchar2(2048);
+l_booked_room_count integer := 0;
+--
+BEGIN
+--
+getRoomList
+   ( p_hotel_name 
+   , p_from_date  
+   , p_to_date    
+   , l_room_cursor  
+   , l_room_message);
+--
+ FOR room IN l_room_cursor
+  LOOP
+      INSERT INTO room_bookings 
+     (booking_id, hotel_name, customer_name, room_number, start_date, end_date)
+     VALUES
+     (booking_id_seq.nextval, UPPER(LTRIM(RTRIM(p_hotel_name))) 
+    ,UPPER(LTRIM(RTRIM(p_customer_name))), room.room_number,  p_from_date, p_to_date);  
+    --
+    l_booked_room_count := l_booked_room_count + 1;
+    --
+    IF l_booked_room_count = p_room_count THEN
+    --
+      EXIT;
+    --
+    END IF;
+    --
+END LOOP;
+-- 
+IF l_booked_room_count < p_room_count THEN
+--
+  p_message := 'Unable to book '||p_room_count||' rooms. Only '||l_booked_room_count||' available. Nothing booked.';
+  ROLLBACK;
+  --
+END IF;
+--
+OPEN BookingCursor FOR 
+SELECT b.* 
+FROM room_bookings b
+WHERE b.hotel_name = UPPER(LTRIM(RTRIM(p_hotel_name))) 
+AND   b.customer_name = UPPER(LTRIM(RTRIM(p_customer_name))) 
+AND   b.start_date = p_from_date
+AND   b.end_date = p_to_date
+ORDER BY b.booking_id;
+--
+END;
+--
+END;
+/
+
+
+

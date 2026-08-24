@@ -1,0 +1,218 @@
+{
+  "productVersion": null,
+  "productBuild": null,
+  "uiname": "Metal",
+  "author": "",
+  "version": "1",
+  "comment": "",
+  "hostname": "10.13.1.226",
+  "port": "1521",
+  "oracleSid": "/FREEPDB1",
+  "user": "MCP_DEMO",
+  "pass": "FROM_ENV_VARIABLE_DB_PASS",
+  "oracleVersion": null,
+  "otherUserName": "SYNUSER",
+  "xSize": "800",
+  "ySize": "600",
+  "debugMessages": "YES",
+  "otherMessages": "YES",
+  "codeComments": "YES",
+  "userObjects": "YES",
+  "otherObjects": "YES",
+  "methodsByte": "YES",
+  "methodsByteObj": "YES",
+  "methodsShort": "YES",
+  "methodsShortObj": "YES",
+  "methodsInt": "YES",
+  "methodsIntObj": "YES",
+  "methodsLong": "YES",
+  "methodsLongObj": "YES",
+  "methodsFloat": "YES",
+  "methodsFloatObj": "YES",
+  "methodsDouble": "YES",
+  "methodsDoubleObj": "YES",
+  "validate": "YES",
+  "extraSql": "YES",
+  "packageName": "com.mcpdbwizard.customer",
+  "codeBaseDirectory": "generated-src",
+  "codeBaseDirectoryFrozen": "NO",
+  "sqlFileDirectory": "/data/sqltext/mcpdemo",
+  "codeStatistics": "YES",
+  "javaAccessType": "public",
+  "javaNamingConvention": "InitialCapitalLetters.java",
+  "targetJvm": "21",
+  "methodSqlPrefix": "",
+  "methodPlsqlPrefix": "",
+  "extraClassCode": "",
+  "webServices": "YES",
+  "mcpServer": "YES",
+  "mcpHttpToken": "NO",
+  "mcpHttps": "NO",
+  "mcpOAuth": "NO",
+  "mcpInstructions": null,
+  "prometheusServer": "NO",
+  "runOnStart": "YES",
+  "metricsPort": null,
+  "webServicesAbstractBfile": "NO",
+  "wsPreCallStub": "NO",
+  "wsPostCallStub": "NO",
+  "wsAlwaysRelease": "NO",
+  "wsRecordType": "public, no access methods",
+  "wsNumberType": "java.math.BigDecimal",
+  "wsInterfaceName": "DaoFactoryServiceInterface",
+  "wsImplName": "DaoFactoryServiceImpl",
+  "daoFinalize": "NO",
+  "daoLogType": "Console Log",
+  "daoLogName": "mcp",
+  "daoFactoryName": "DaoFactory",
+  "daoEjb": "NONE",
+  "daoConnectionType": "Hard coded connect string",
+  "daoConnectionName": "jdbc:oracle:thin:MCP_DEMO/FROM_ENV_VARIABLE_DB_PASS@//10.13.1.226:1521/FREEPDB1",
+  "commitConnections": "YES",
+  "closeConnections": "NO",
+  "daoPool": "YES",
+  "daoPoolMaxSize": "10",
+  "daoPoolMinIdle": "1",
+  "daoPoolMaxWaitMs": "30000",
+  "daoPoolIdleTimeoutMs": "300000",
+  "daoPoolOnReturn": "COMMIT",
+  "ec30ProjectPath": null,
+  "ec30RelPath": null,
+  "defaultTempdir": "user.dir",
+  "defaultTempPrefix": "OSOFT",
+  "defaultTempSuffix": ".tmp",
+  "postScriptName": "",
+  "postScriptContent": "",
+  "xwsType": "NONE",
+  "xwsIface": "",
+  "xmsImpl": "",
+  "sequences": [
+    {
+      "index": 0.0,
+      "name": "BOOKING_ID_SEQ",
+      "user": "MCP_DEMO"
+    },
+    {
+      "index": 1.0,
+      "name": "COMPLAINT_ID_SEQ",
+      "user": "MCP_DEMO"
+    }
+  ],
+  "tables": [
+    {
+      "index": 0.0,
+      "name": "COMPLAINTS",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 1.0,
+      "name": "CUSTOMERS",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 2.0,
+      "name": "HOTELS",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 3.0,
+      "name": "HOTEL_AMENITIES",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 4.0,
+      "name": "HOTEL_AMENITIES_SUMMARY",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 5.0,
+      "name": "HOTEL_REGIONS",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 6.0,
+      "name": "HOTEL_ROOMS",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 7.0,
+      "name": "ROOM_BOOKINGS",
+      "user": "MCP_DEMO",
+      "mcpCrud": "R"
+    }
+  ],
+  "procedures": [
+    {
+      "index": 0.0,
+      "name": "BOOKROOM",
+      "user": "MCP_DEMO",
+      "pkg": "ROOM_MANAGER",
+      "overload": null
+    },
+    {
+      "index": 1.0,
+      "name": "GETROOMLIST",
+      "user": "MCP_DEMO",
+      "pkg": "ROOM_MANAGER",
+      "overload": null,
+      "mcpDescription": "use this to  check availability for a specific hotel for a specific date range"
+    },
+    {
+      "index": 2.0,
+      "name": "HOTEL_OCCUPANCY",
+      "user": "MCP_DEMO",
+      "pkg": null,
+      "overload": null,
+      "mcpDescription": "Use this to find out if a hotel is full or not for a date range."
+    },
+    {
+      "index": 3.0,
+      "name": "UPSERT_CUSTOMER",
+      "user": "MCP_DEMO",
+      "pkg": null,
+      "overload": null
+    }
+  ],
+  "sqlStatements": [
+    {
+      "index": 0.0,
+      "filename": "amenity_list.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "select * from hotel_amenities_summary order by amenity_name;"
+    },
+    {
+      "index": 1.0,
+      "filename": "complaints_per_customer.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "select * from complaints \r\nwhere customer_name = ? /* String */\r\norder by complaint_date;"
+    },
+    {
+      "index": 2.0,
+      "filename": "region_list.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "select * from hotel_regions order by region_name;"
+    },
+    {
+      "index": 3.0,
+      "filename": "stays_per_customer.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "SELECT booking_id, hotel_name, room_number, start_date, end_date\nfrom room_bookings\nwhere customer_name = UPPER(LTRIM(RTRIM(? /* String */)))\nORDER BY start_date, booking_id;\n"
+    }
+  ],
+  "extraProperties": {}
+}
