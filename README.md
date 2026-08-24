@@ -78,24 +78,22 @@ Uniqueness is enforced on the stored value, so case matters: write through
 ## HOTEL_OCCUPANCY
 
 Occupancy by hotel by day, as a percentage of the hotel's rooms. The date range
-is required, the hotel is not - leave it out and every hotel is reported.
+is required. The hotel name is not optional either, but it accepts null, and
+null means every hotel.
 
 ```sql
 PROCEDURE HOTEL_OCCUPANCY
    ( p_from_date  IN  DATE
    , p_to_date    IN  DATE
    , p_results    OUT SYS_REFCURSOR
-   , p_hotel_name IN  VARCHAR2 DEFAULT NULL )
+   , p_hotel_name IN  VARCHAR2 )
 ```
-
-The optional parameter comes after the `OUT` cursor deliberately, so that a
-positional call can leave it off:
 
 ```sql
 DECLARE
    v_results SYS_REFCURSOR;
 BEGIN
-   hotel_occupancy(DATE '2026-05-04', DATE '2026-05-11', v_results);                    -- every hotel
+   hotel_occupancy(DATE '2026-05-04', DATE '2026-05-11', v_results, NULL);              -- every hotel
    hotel_occupancy(DATE '2026-05-04', DATE '2026-05-11', v_results, 'grand budapest');  -- just the one
 END;
 /
@@ -144,7 +142,10 @@ rather than rejected as a duplicate email.
 
 Every outcome is a sentence, including the ones a constraint would otherwise
 report as `ORA-00001` or `ORA-02290`, so a caller has something to show a user.
-The procedure does not commit - that is left to the caller.
+
+The procedure commits its own work: an insert or an update is committed before
+the message comes back, so the caller does not have to, and cannot roll it back
+afterwards.
 
 ```sql
 DECLARE
@@ -155,8 +156,7 @@ BEGIN
    v_cust.phone_number   := '+1 214 555 0190';
    v_cust.email_address  := 'Dignan@BottleRocket.zz';
    upsert_customer(v_cust, v_msg);
-   dbms_output.put_line(v_msg);   -- Created customer DIGNAN
-   COMMIT;
+   dbms_output.put_line(v_msg);   -- Created customer DIGNAN, already committed
 END;
 /
 ```

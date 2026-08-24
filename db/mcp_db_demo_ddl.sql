@@ -172,6 +172,7 @@ BEGIN
    EXCEPTION WHEN NO_DATA_FOUND THEN
 
       INSERT INTO customers VALUES v_customer;
+      COMMIT;
       p_message := 'Created customer ' || v_customer.customer_name;
       RETURN;
 
@@ -184,6 +185,7 @@ BEGIN
       UPDATE customers
       SET    ROW = v_customer
       WHERE  customer_name = v_customer.customer_name;
+      COMMIT;
 
       p_message := 'Updated customer ' || v_customer.customer_name;
    END IF;
@@ -219,7 +221,7 @@ CREATE OR REPLACE PROCEDURE HOTEL_OCCUPANCY
    ( p_from_date  IN  DATE
    , p_to_date    IN  DATE
    , p_results    OUT SYS_REFCURSOR
-   , p_hotel_name IN  VARCHAR2 DEFAULT NULL )
+   , p_hotel_name IN  VARCHAR2 )
 AS
    v_from_date  DATE         := TRUNC(p_from_date);
    v_to_date    DATE         := TRUNC(p_to_date);
@@ -227,8 +229,8 @@ AS
    v_exists     PLS_INTEGER;
 BEGIN
 
-   -- The date range is required. The hotel is not: leaving it null reports
-   -- on every hotel.
+   -- The date range is required. The hotel is not: pass null to report on
+   -- every hotel.
    IF v_from_date IS NULL THEN
       RAISE_APPLICATION_ERROR(-20001,'A from date is required');
    END IF;
