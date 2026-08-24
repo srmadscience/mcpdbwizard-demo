@@ -54,3 +54,9 @@ UPDATE customers SET phone_number = '+1 713 555 0180', email_address = 'herman.b
 WHERE  customer_name = 'HERMAN BLUME';
 
 COMMIT;
+
+-- Built after the backfill so the index is populated in one pass
+
+CREATE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
+
+CREATE INDEX "CUSTOMERS_PHONE_NUMBER" ON "CUSTOMERS" ("PHONE_NUMBER");
