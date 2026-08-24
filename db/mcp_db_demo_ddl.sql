@@ -413,6 +413,8 @@ IF l_booked_room_count < p_room_count THEN
   --
 END IF;
 --
+-- Note that if the loop failed we *still* return a list of bookings, as
+-- the same customer might make multiple ones. p_message conveys the outcome.
 OPEN BookingCursor FOR 
 SELECT b.* 
 FROM room_bookings b
