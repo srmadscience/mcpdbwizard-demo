@@ -34,7 +34,8 @@ CREATE TABLE "CUSTOMERS"
        "PHONE_NUMBER"   VARCHAR2(20 BYTE) NOT NULL ENABLE,
        "EMAIL_ADDRESS"  VARCHAR2(80 BYTE) NOT NULL ENABLE,
        CONSTRAINT "CUSTOMERS_PK" PRIMARY KEY ("CUSTOMER_NAME")
-       USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255);
+       USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255,
+       CONSTRAINT "CUSTOMERS_EMAIL_HAS_AT" CHECK (EMAIL_ADDRESS LIKE '%@%') ENABLE);
 
 CREATE UNIQUE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
 
@@ -98,6 +99,12 @@ AS
    v_customer CUSTOMERS%ROWTYPE := p_customer;
    v_existing CUSTOMERS%ROWTYPE;
 
+   c_needs_at CONSTANT VARCHAR2(60) := ' is not a valid email address, it needs an @';
+
+   -- ORA-02290: a check constraint was violated
+   e_check_violated EXCEPTION;
+   PRAGMA EXCEPTION_INIT(e_check_violated, -2290);
+
    -- NULL safe comparison, so that two NULLs count as 'unchanged'
    FUNCTION unchanged(p_old IN VARCHAR2, p_new IN VARCHAR2) RETURN BOOLEAN IS
    BEGIN
@@ -127,6 +134,13 @@ BEGIN
 
    IF v_customer.email_address IS NULL THEN
       p_message := 'An email address is required';
+      RETURN;
+   END IF;
+
+   -- Checked here as well as by CUSTOMERS_EMAIL_HAS_AT, so that the caller
+   -- gets a sentence rather than an ORA-02290
+   IF INSTR(v_customer.email_address,'@') = 0 THEN
+      p_message := 'Email address ' || v_customer.email_address || c_needs_at;
       RETURN;
    END IF;
 
@@ -170,6 +184,15 @@ EXCEPTION WHEN DUP_VAL_ON_INDEX THEN
    ELSE
       -- Another session inserted the same customer between our SELECT and INSERT
       p_message := 'This customer already exists';
+   END IF;
+
+WHEN e_check_violated THEN
+
+   -- Backstop for a value that reached the DML without passing the check above
+   IF INSTR(SQLERRM,'CUSTOMERS_EMAIL_HAS_AT') > 0 THEN
+      p_message := 'Email address ' || v_customer.email_address || c_needs_at;
+   ELSE
+      RAISE;
    END IF;
 
 END UPSERT_CUSTOMER;

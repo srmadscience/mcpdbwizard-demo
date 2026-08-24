@@ -61,6 +61,9 @@ ALTER TABLE customers MODIFY
    (   "PHONE_NUMBER"   NOT NULL,
        "EMAIL_ADDRESS"  NOT NULL);
 
+ALTER TABLE customers ADD CONSTRAINT "CUSTOMERS_EMAIL_HAS_AT"
+   CHECK (EMAIL_ADDRESS LIKE '%@%') ENABLE;
+
 -- Built after the backfill so each index is populated in one pass
 
 CREATE UNIQUE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
