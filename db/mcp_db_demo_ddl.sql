@@ -31,8 +31,8 @@ CREATE INDEX "HOTEL_ROOMS_ROOM_IDX" ON "HOTEL_ROOMS" ("ROOM_NUMBER");
 
 CREATE TABLE "CUSTOMERS"
    (   "CUSTOMER_NAME"  VARCHAR2(20 BYTE) NOT NULL ENABLE,
-       "PHONE_NUMBER"   VARCHAR2(20 BYTE),
-       "EMAIL_ADDRESS"  VARCHAR2(80 BYTE),
+       "PHONE_NUMBER"   VARCHAR2(20 BYTE) NOT NULL ENABLE,
+       "EMAIL_ADDRESS"  VARCHAR2(80 BYTE) NOT NULL ENABLE,
        CONSTRAINT "CUSTOMERS_PK" PRIMARY KEY ("CUSTOMER_NAME")
        USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255);
 
@@ -107,11 +107,26 @@ AS
 
 BEGIN
 
-   -- Customer names are always stored in upper case
-   v_customer.customer_name := UPPER(TRIM(p_customer.customer_name));
+   -- Customer names are always stored in upper case, email addresses in
+   -- lower case, so that the unique indexes see one form of each value
+   v_customer.customer_name  := UPPER(TRIM(p_customer.customer_name));
+   v_customer.email_address  := LOWER(TRIM(p_customer.email_address));
+   v_customer.phone_number   := TRIM(p_customer.phone_number);
 
+   -- All three columns are NOT NULL, so report a missing one rather than
+   -- letting the INSERT or UPDATE raise ORA-01400
    IF v_customer.customer_name IS NULL THEN
       p_message := 'A customer name is required';
+      RETURN;
+   END IF;
+
+   IF v_customer.phone_number IS NULL THEN
+      p_message := 'A phone number is required';
+      RETURN;
+   END IF;
+
+   IF v_customer.email_address IS NULL THEN
+      p_message := 'An email address is required';
       RETURN;
    END IF;
 

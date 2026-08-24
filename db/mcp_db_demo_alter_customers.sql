@@ -55,7 +55,13 @@ WHERE  customer_name = 'HERMAN BLUME';
 
 COMMIT;
 
--- Built after the backfill so the index is populated in one pass
+-- Only enforceable once every existing row has been given values above
+
+ALTER TABLE customers MODIFY
+   (   "PHONE_NUMBER"   NOT NULL,
+       "EMAIL_ADDRESS"  NOT NULL);
+
+-- Built after the backfill so each index is populated in one pass
 
 CREATE UNIQUE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
 
