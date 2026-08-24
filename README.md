@@ -1,17 +1,26 @@
 # mcpdbwizard-demo
 
-A demo Oracle schema for MCP DB Wizard: a small hotel booking database with
-enough tables, views, constraints and PL/SQL to exercise a generator that turns
-Oracle metadata into an MCP server.
+A demo Oracle schema for [MCP DB Wizard](https://mcpdbwizard.com): a small hotel
+booking database with enough tables, views, constraints and PL/SQL to exercise a
+generator that turns Oracle metadata into an MCP server.
+
+The wizard reads a schema, you tick the objects you are willing to expose, and it
+generates an MCP server that has tools for those objects and nothing else. Objects
+you did not tick are absent from the generated binary rather than blocked at
+request time - [the config is the security model](https://mcpdbwizard.com/docs/configs/).
+This repository is the other half of that exercise: the schema to point it at, plus
+a saved config that already makes the interesting choices.
 
 ## Contents
 
 | File | Purpose |
 | --- | --- |
-| `db/mcp_db_demo_ddl.sql` | Tables, indexes, views, sequences and the `UPSERT_CUSTOMER` procedure |
-| `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 13 customers, 15 bookings, 7 complaints |
+| `db/mcp_db_demo_ddl.sql` | Tables, indexes, views, sequences, `UPSERT_CUSTOMER`, `HOTEL_OCCUPANCY` and the `ROOM_MANAGER` package |
+| `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 43 customers, 92 bookings, 7 complaints |
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
 | `db/mcp_db_demo_alter_customers.sql` | Migration for a schema created before `CUSTOMERS` had contact details |
+| `SqlStatements/*.sql` | Hand-written queries exposed as tools, one file per tool |
+| `mcpdemo.json` | A saved wizard config: which objects to expose, and how |
 
 ## Installing
 
@@ -32,6 +41,48 @@ PROCEDURE UPSERT_CUSTOMER` section of the DDL:
 ```sql
 @db/mcp_db_demo_alter_customers.sql
 ```
+
+## Running the wizard against it
+
+The [quickstart](https://mcpdbwizard.com/docs/quickstart/) has the full version.
+Pointed at this schema, the container looks roughly like this:
+
+```bash
+docker run -d --name mcpdbwizard \
+  -p 8080:8080 \
+  -v mcpdbwizard-demo:/data \
+  -e MCPDBWIZARD_ORACLE_HOST=your.db.host \
+  -e MCPDBWIZARD_ORACLE_PORT=1521 \
+  -e MCPDBWIZARD_ORACLE_SID=/FREEPDB1 \
+  -e MCPDBWIZARD_ORACLE_USER=MCP_DEMO \
+  -e MCPDBWIZARD_ORACLE_OTHER_USER=SYNUSER \
+  -e DB_PASS_FILE=/run/secrets/oracle \
+  mcpdbwizard-web
+```
+
+The leading `/` on the SID is what makes it a service name rather than a SID.
+Then open `http://localhost:8080`, upload `mcpdemo.json` on the Configs tab, and
+put the four files from `SqlStatements/` where the config expects them - it looks
+in `/data/sqltext/mcpdemo`, which is inside the `/data` volume mounted above.
+
+Generate and run from the Runtime page. The generated server starts on the next
+free loopback port in 8090-8109, but clients connect through the proxy on 8080,
+not to that port directly:
+
+```json
+{
+  "mcpServers": {
+    "mcpdemo": {
+      "url": "http://localhost:8080/mcp/mcpdemo",
+      "headers": { "Authorization": "Bearer <id>.<secret>" }
+    }
+  }
+}
+```
+
+The token comes from the Users page and is shown once. Note that this config has
+`mcpHttpToken`, `mcpHttps` and `mcpOAuth` all set to `NO`, which is fine for a
+demo on your own machine and not fine anywhere else.
 
 ## The schema
 
@@ -61,6 +112,10 @@ VALUES ('MR FOX','My room is constructed from crushed sake bottles');
 `COMPLAINT_DATE` defaults to today and `RESOLVED_Y_OR_N` to `N`, so a new
 complaint needs only the customer and the text.
 
+The sample bookings deliberately include hotels that are sold out for parts of
+the range, so occupancy and availability have something to report other than
+"yes, there is a room".
+
 ### CUSTOMERS
 
 All three columns are mandatory, and each carries a rule worth knowing about
@@ -74,6 +129,45 @@ before you write to the table:
 
 Uniqueness is enforced on the stored value, so case matters: write through
 `UPSERT_CUSTOMER` and it is handled for you.
+
+### ROOM_BOOKINGS
+
+`START_BEFORE_END` requires the start to be strictly before the end, and both
+dates must be midnight exactly. Read `END_DATE` as the day the guest leaves.
+
+## ROOM_MANAGER
+
+A package with the two halves of booking a room: find out what is free, then
+take some of it.
+
+```sql
+PROCEDURE getRoomList
+   ( p_hotel_name IN  VARCHAR2
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_results    OUT RoomCursor
+   , p_message    OUT VARCHAR2 )
+```
+
+Rooms in the named hotel with nothing booked over the range, as a ref cursor of
+`HOTEL_ROOMS` rows. The hotel name is upper-cased and trimmed. A missing hotel
+name or either date comes back through `p_message` with the cursor left unopened.
+
+```sql
+PROCEDURE BookRoom
+   ( p_hotel_name    IN  VARCHAR2
+   , p_customer_name IN  VARCHAR2
+   , p_from_date     IN  DATE
+   , p_to_date       IN  DATE
+   , p_room_count    IN  NATURAL
+   , BookingCursor   OUT BookingCursor
+   , p_message       OUT VARCHAR2 )
+```
+
+Books `p_room_count` of whatever `getRoomList` found. It is all or nothing: if
+fewer rooms are free than were asked for, nothing is booked and `p_message` says
+so. The cursor comes back either way, because the same customer may hold more
+than one booking for those dates - `p_message` is what tells you which happened.
 
 ## HOTEL_OCCUPANCY
 
@@ -161,3 +255,55 @@ BEGIN
 END;
 /
 ```
+
+## SQL statements
+
+Queries that are not worth a procedure but are worth a tool. One file becomes one
+tool, so [declining to select a statement is the control](https://mcpdbwizard.com/docs/sql-statements/).
+
+| File | Returns |
+| --- | --- |
+| `amenity_list.sql` | Every amenity, and how often it is charged for |
+| `region_list.sql` | Ratings aggregated by region |
+| `complaints_per_customer.sql` | One customer's complaints, oldest first |
+| `stays_per_customer.sql` | One customer's bookings, oldest first |
+
+Bind variables are typed in a trailing comment, which is how a `?` gets a type
+on the way out to JSON:
+
+```sql
+SELECT booking_id, hotel_name, room_number, start_date, end_date
+from room_bookings
+where customer_name = UPPER(LTRIM(RTRIM(? /* String */)))
+ORDER BY start_date, booking_id;
+```
+
+Wrapping the bind in `UPPER(LTRIM(RTRIM(...)))` means a caller can pass a name in
+any case and still match what is stored.
+
+## The config
+
+`mcpdemo.json` is a saved config, in the format the Configs tab downloads. It
+selects:
+
+- **8 tables and views**, every one of them `"mcpCrud": "R"`. Read only: create,
+  update and delete are per-table ticks and none of them are ticked here
+- **2 sequences**, `BOOKING_ID_SEQ` and `COMPLAINT_ID_SEQ`
+- **4 procedures**: `ROOM_MANAGER.GETROOMLIST`, `ROOM_MANAGER.BOOKROOM`,
+  `HOTEL_OCCUPANCY` and `UPSERT_CUSTOMER`
+- **4 SQL statements**, the files in `SqlStatements/`
+
+So the only ways to change anything are the procedures, which is the point: the
+writes that exist are the ones that enforce their own rules.
+
+Two of the procedures carry an `mcpDescription`, which is what the agent reads
+when it is deciding whether this is the tool it wants:
+
+```json
+{ "name": "GETROOMLIST", "pkg": "ROOM_MANAGER",
+  "mcpDescription": "use this to  check availability for a specific hotel for a specific date range" }
+```
+
+The config never stores a password. `pass` and the connection string both carry
+the literal `FROM_ENV_VARIABLE_DB_PASS`, and the real password arrives in the
+container's environment.
