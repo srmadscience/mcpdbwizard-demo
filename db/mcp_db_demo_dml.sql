@@ -124,3 +124,11 @@ INSERT INTO room_bookings VALUES (booking_id_seq.nextval,'HOTEL CHEVALIER','MARG
 INSERT INTO room_bookings VALUES (booking_id_seq.nextval,'TRASH ISLAND INN','MR FOX',902,DATE '2026-10-02',DATE '2026-10-03');
 INSERT INTO room_bookings VALUES (booking_id_seq.nextval,'THORIUM TOWERS','HERMAN BLUME',100,DATE '2026-07-01',DATE '2026-07-04');
 INSERT INTO room_bookings VALUES (booking_id_seq.nextval,'BORDER VIEW','ZERO MOUSTAFA',205,DATE '2026-12-24',DATE '2026-12-31');
+
+INSERT INTO complaints (customer_name, complaint_text) VALUES ('M GUSTAVE','The lobby boy was insufficiently discreet. I have trained him myself and take full responsibility, but the complaint stands');
+INSERT INTO complaints (customer_name, complaint_text) VALUES ('ZERO MOUSTAFA','My room in BORDER VIEW is bisected by an international frontier. I am obliged to carry papers to reach the bathroom');
+INSERT INTO complaints (customer_name, complaint_text) VALUES ('STEVE ZISSOU','The sauna is directly beneath the dolphin pens and the acoustics are unbearable. Also the dolphins are unreliable');
+INSERT INTO complaints (customer_name, complaint_text) VALUES ('MR FOX','My room is constructed from crushed sake bottles. I was asked to bring my own dog and was then charged for it');
+INSERT INTO complaints (customer_name, complaint_text) VALUES ('SUZY BISHOP','The lookout tower was built by twelve year olds without adult supervision. I have inspected it and I concur');
+INSERT INTO complaints (customer_name, complaint_text, complaint_date, resolved_y_or_n) VALUES ('AUGIE STEENBECK','An alien removed the meteorite from the crater during my stay. The front desk denies all knowledge',DATE '2026-08-25','Y');
+INSERT INTO complaints (customer_name, complaint_text, complaint_date, resolved_y_or_n) VALUES ('MARGOT TENENBAUM','The bath is yellow, enormous, and suitable for two. I was travelling alone',DATE '2026-09-15','Y');

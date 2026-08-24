@@ -9,7 +9,7 @@ Oracle metadata into an MCP server.
 | File | Purpose |
 | --- | --- |
 | `db/mcp_db_demo_ddl.sql` | Tables, indexes, views, sequences and the `UPSERT_CUSTOMER` procedure |
-| `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 13 customers, 15 bookings |
+| `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 13 customers, 15 bookings, 7 complaints |
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
 | `db/mcp_db_demo_alter_customers.sql` | Migration for a schema created before `CUSTOMERS` had contact details |
 
@@ -42,13 +42,24 @@ PROCEDURE UPSERT_CUSTOMER` section of the DDL:
 | `HOTEL_ROOMS` | Room numbers, with optional notes on what makes a room unusual |
 | `CUSTOMERS` | Customer name, phone number and email address |
 | `ROOM_BOOKINGS` | Who is in which room, between which dates |
+| `COMPLAINTS` | What a customer complained about, when, and whether it was resolved |
 
 Two views summarise the reference data: `HOTEL_REGIONS` aggregates ratings by
 region, and `HOTEL_AMENITIES_SUMMARY` gives the percentage of hotels that charge
 for each amenity.
 
-`BOOKING_ID_SEQ` supplies booking ids. `COMPLAINT_ID_SEQ` exists but nothing
-uses it yet.
+`BOOKING_ID_SEQ` supplies booking ids, quoted explicitly by the sample
+bookings. `COMPLAINT_ID_SEQ` is wired up as the default for
+`COMPLAINTS.COMPLAINT_ID`, so an insert can leave the id out and let the
+database allocate it:
+
+```sql
+INSERT INTO complaints (customer_name, complaint_text)
+VALUES ('MR FOX','My room is constructed from crushed sake bottles');
+```
+
+`COMPLAINT_DATE` defaults to today and `RESOLVED_Y_OR_N` to `N`, so a new
+complaint needs only the customer and the text.
 
 ### CUSTOMERS
 
