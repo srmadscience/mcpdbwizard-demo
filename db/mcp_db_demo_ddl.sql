@@ -214,3 +214,70 @@ WHEN e_check_violated THEN
 
 END UPSERT_CUSTOMER;
 /
+
+CREATE OR REPLACE PROCEDURE HOTEL_OCCUPANCY
+   ( p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_results    OUT SYS_REFCURSOR
+   , p_hotel_name IN  VARCHAR2 DEFAULT NULL )
+AS
+   v_from_date  DATE         := TRUNC(p_from_date);
+   v_to_date    DATE         := TRUNC(p_to_date);
+   v_hotel_name VARCHAR2(20) := UPPER(TRIM(p_hotel_name));
+   v_exists     PLS_INTEGER;
+BEGIN
+
+   -- The date range is required. The hotel is not: leaving it null reports
+   -- on every hotel.
+   IF v_from_date IS NULL THEN
+      RAISE_APPLICATION_ERROR(-20001,'A from date is required');
+   END IF;
+
+   IF v_to_date IS NULL THEN
+      RAISE_APPLICATION_ERROR(-20002,'A to date is required');
+   END IF;
+
+   IF v_from_date > v_to_date THEN
+      RAISE_APPLICATION_ERROR(-20003,'The from date must not be after the to date');
+   END IF;
+
+   IF v_hotel_name IS NOT NULL THEN
+
+      SELECT COUNT(*)
+      INTO   v_exists
+      FROM   hotels
+      WHERE  hotel_name = v_hotel_name;
+
+      IF v_exists = 0 THEN
+         RAISE_APPLICATION_ERROR(-20004,'There is no hotel called ' || v_hotel_name);
+      END IF;
+
+   END IF;
+
+   -- A booking occupies [start_date, end_date), so a checkout day is free.
+   -- Every hotel appears on every day of the range, including days with no
+   -- bookings at all.
+   OPEN p_results FOR
+   SELECT c.occupancy_date
+   ,      h.hotel_name
+   ,      h.rooms                                                  rooms_in_hotel
+   ,      COUNT(DISTINCT b.room_number)                            rooms_occupied
+   ,      ROUND(COUNT(DISTINCT b.room_number) / h.rooms * 100, 1)  percent_occupied
+   FROM   (   SELECT     v_from_date + LEVEL - 1 occupancy_date
+              FROM       dual
+              CONNECT BY LEVEL <= v_to_date - v_from_date + 1 )    c
+   ,      (   SELECT   hotel_name
+              ,        COUNT(*) rooms
+              FROM     hotel_rooms
+              WHERE    v_hotel_name IS NULL
+              OR       hotel_name = v_hotel_name
+              GROUP BY hotel_name )                                h
+   ,      room_bookings                                            b
+   WHERE  b.hotel_name(+)  = h.hotel_name
+   AND    b.start_date(+) <= c.occupancy_date
+   AND    b.end_date(+)   >  c.occupancy_date
+   GROUP BY c.occupancy_date, h.hotel_name, h.rooms
+   ORDER BY c.occupancy_date, h.hotel_name;
+
+END HOTEL_OCCUPANCY;
+/

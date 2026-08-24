@@ -75,6 +75,47 @@ before you write to the table:
 Uniqueness is enforced on the stored value, so case matters: write through
 `UPSERT_CUSTOMER` and it is handled for you.
 
+## HOTEL_OCCUPANCY
+
+Occupancy by hotel by day, as a percentage of the hotel's rooms. The date range
+is required, the hotel is not - leave it out and every hotel is reported.
+
+```sql
+PROCEDURE HOTEL_OCCUPANCY
+   ( p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_results    OUT SYS_REFCURSOR
+   , p_hotel_name IN  VARCHAR2 DEFAULT NULL )
+```
+
+The optional parameter comes after the `OUT` cursor deliberately, so that a
+positional call can leave it off:
+
+```sql
+DECLARE
+   v_results SYS_REFCURSOR;
+BEGIN
+   hotel_occupancy(DATE '2026-05-04', DATE '2026-05-11', v_results);                    -- every hotel
+   hotel_occupancy(DATE '2026-05-04', DATE '2026-05-11', v_results, 'grand budapest');  -- just the one
+END;
+/
+```
+
+Each row is a hotel on a day: `OCCUPANCY_DATE`, `HOTEL_NAME`, `ROOMS_IN_HOTEL`,
+`ROOMS_OCCUPIED` and `PERCENT_OCCUPIED`. Days with no bookings come back as 0%
+rather than being left out, so the result is a complete series. The hotel name
+is upper-cased and trimmed for you.
+
+Bad input raises rather than returning an empty result, so a caller can tell the
+difference between "nobody stayed" and "you asked the wrong question":
+
+| Problem | Error |
+| --- | --- |
+| No from date | `ORA-20001: A from date is required` |
+| No to date | `ORA-20002: A to date is required` |
+| Range the wrong way round | `ORA-20003: The from date must not be after the to date` |
+| Hotel does not exist | `ORA-20004: There is no hotel called X` |
+
 ## UPSERT_CUSTOMER
 
 Takes a whole customer row and reports what it did. A PL/SQL procedure cannot
