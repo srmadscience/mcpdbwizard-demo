@@ -1,2 +1,2 @@
 # mcpdbwizard-demo
-A demo oracle schema for MCP DB Wizard
+A demo Oracle schema for MCP DB Wizard
