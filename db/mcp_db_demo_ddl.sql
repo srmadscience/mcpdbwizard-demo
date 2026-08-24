@@ -36,9 +36,9 @@ CREATE TABLE "CUSTOMERS"
        CONSTRAINT "CUSTOMERS_PK" PRIMARY KEY ("CUSTOMER_NAME")
        USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255);
 
-CREATE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
+CREATE UNIQUE INDEX "CUSTOMERS_EMAIL_ADDRESS" ON "CUSTOMERS" ("EMAIL_ADDRESS");
 
-CREATE INDEX "CUSTOMERS_PHONE_NUMBER" ON "CUSTOMERS" ("PHONE_NUMBER");
+CREATE UNIQUE INDEX "CUSTOMERS_PHONE_NUMBER" ON "CUSTOMERS" ("PHONE_NUMBER");
 
 CREATE TABLE "ROOM_BOOKINGS"
    (   "BOOKING_ID"    NUMBER            NOT NULL ENABLE,
@@ -143,7 +143,19 @@ BEGIN
    END IF;
 
 EXCEPTION WHEN DUP_VAL_ON_INDEX THEN
-   -- Another session inserted the same customer between our SELECT and INSERT
-   p_message := 'This customer already exists';
+
+   -- EMAIL_ADDRESS and PHONE_NUMBER are unique too, so a clash on either is
+   -- reported against the offending column rather than the customer
+   IF INSTR(SQLERRM,'CUSTOMERS_EMAIL_ADDRESS') > 0 THEN
+      p_message := 'Email address ' || v_customer.email_address
+                || ' already belongs to another customer';
+   ELSIF INSTR(SQLERRM,'CUSTOMERS_PHONE_NUMBER') > 0 THEN
+      p_message := 'Phone number ' || v_customer.phone_number
+                || ' already belongs to another customer';
+   ELSE
+      -- Another session inserted the same customer between our SELECT and INSERT
+      p_message := 'This customer already exists';
+   END IF;
+
 END UPSERT_CUSTOMER;
 /
