@@ -1,2 +1,110 @@
 # mcpdbwizard-demo
-A demo Oracle schema for MCP DB Wizard
+
+A demo Oracle schema for MCP DB Wizard: a small hotel booking database with
+enough tables, views, constraints and PL/SQL to exercise a generator that turns
+Oracle metadata into an MCP server.
+
+## Contents
+
+| File | Purpose |
+| --- | --- |
+| `db/mcp_db_demo_ddl.sql` | Tables, indexes, views, sequences and the `UPSERT_CUSTOMER` procedure |
+| `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 13 customers, 15 bookings |
+| `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
+| `db/mcp_db_demo_alter_customers.sql` | Migration for a schema created before `CUSTOMERS` had contact details |
+
+## Installing
+
+Against an empty schema:
+
+```sql
+@db/mcp_db_demo_ddl.sql
+@db/mcp_db_demo_dml.sql
+```
+
+To start again, run `db/mcp_db_demo_drop.sql` first.
+
+If you have an older copy of this schema, where `CUSTOMERS` has only
+`CUSTOMER_NAME`, do not re-run the DDL - it will fail on the tables that
+already exist. Run the migration instead, then the `CREATE OR REPLACE
+PROCEDURE UPSERT_CUSTOMER` section of the DDL:
+
+```sql
+@db/mcp_db_demo_alter_customers.sql
+```
+
+## The schema
+
+| Table | Holds |
+| --- | --- |
+| `HOTELS` | One row per hotel, with a region, a star rating and a customer rating |
+| `HOTEL_AMENITIES` | What each hotel offers, and whether it is chargeable |
+| `HOTEL_ROOMS` | Room numbers, with optional notes on what makes a room unusual |
+| `CUSTOMERS` | Customer name, phone number and email address |
+| `ROOM_BOOKINGS` | Who is in which room, between which dates |
+
+Two views summarise the reference data: `HOTEL_REGIONS` aggregates ratings by
+region, and `HOTEL_AMENITIES_SUMMARY` gives the percentage of hotels that charge
+for each amenity.
+
+`BOOKING_ID_SEQ` supplies booking ids. `COMPLAINT_ID_SEQ` exists but nothing
+uses it yet.
+
+### CUSTOMERS
+
+All three columns are mandatory, and each carries a rule worth knowing about
+before you write to the table:
+
+- `CUSTOMER_NAME` is the primary key
+- `EMAIL_ADDRESS` and `PHONE_NUMBER` are each unique, so no two customers can
+  share either
+- `CUSTOMERS_EMAIL_HAS_AT` requires the email address to contain an `@` with at
+  least one character on both sides
+
+Uniqueness is enforced on the stored value, so case matters: write through
+`UPSERT_CUSTOMER` and it is handled for you.
+
+## UPSERT_CUSTOMER
+
+Takes a whole customer row and reports what it did. A PL/SQL procedure cannot
+return a value, so the message comes back through an `OUT` parameter:
+
+```sql
+PROCEDURE UPSERT_CUSTOMER
+   ( p_customer IN  CUSTOMERS%ROWTYPE
+   , p_message  OUT VARCHAR2 )
+```
+
+It normalises before it writes - the customer name is upper-cased, the email
+address lower-cased, and both the email and phone are trimmed - so the same
+customer submitted in a different case is recognised as the same customer
+rather than rejected as a duplicate email.
+
+| Situation | Message |
+| --- | --- |
+| Name not on file | `Created customer X` |
+| On file, contact details differ | `Updated customer X` |
+| On file, nothing has changed | `This customer already exists` |
+| Email address belongs to someone else | `Email address a@b.zz already belongs to another customer` |
+| Phone number belongs to someone else | `Phone number +1 555 0100 already belongs to another customer` |
+| Email address has no usable `@` | `Email address a.b.zz is not a valid email address, it needs an @ with text on both sides` |
+| A mandatory column is missing | `A customer name is required`, `A phone number is required` or `An email address is required` |
+
+Every outcome is a sentence, including the ones a constraint would otherwise
+report as `ORA-00001` or `ORA-02290`, so a caller has something to show a user.
+The procedure does not commit - that is left to the caller.
+
+```sql
+DECLARE
+   v_cust CUSTOMERS%ROWTYPE;
+   v_msg  VARCHAR2(200);
+BEGIN
+   v_cust.customer_name  := 'dignan';
+   v_cust.phone_number   := '+1 214 555 0190';
+   v_cust.email_address  := 'Dignan@BottleRocket.zz';
+   upsert_customer(v_cust, v_msg);
+   dbms_output.put_line(v_msg);   -- Created customer DIGNAN
+   COMMIT;
+END;
+/
+```
