@@ -121,6 +121,11 @@ AS
    e_check_violated EXCEPTION;
    PRAGMA EXCEPTION_INIT(e_check_violated, -2290);
 
+   -- ORA-00054: the row is locked by another session, and the SELECT below
+   -- asks for NOWAIT rather than queueing behind them
+   e_record_locked EXCEPTION;
+   PRAGMA EXCEPTION_INIT(e_record_locked, -54);
+
    -- NULL safe comparison, so that two NULLs count as 'unchanged'
    FUNCTION unchanged(p_old IN VARCHAR2, p_new IN VARCHAR2) RETURN BOOLEAN IS
    BEGIN
@@ -167,7 +172,7 @@ BEGIN
       INTO   v_existing
       FROM   customers
       WHERE  customer_name = v_customer.customer_name
-      FOR UPDATE;
+      FOR UPDATE NOWAIT;
 
    EXCEPTION WHEN NO_DATA_FOUND THEN
 
@@ -204,6 +209,13 @@ EXCEPTION WHEN DUP_VAL_ON_INDEX THEN
       -- Another session inserted the same customer between our SELECT and INSERT
       p_message := 'This customer already exists';
    END IF;
+
+WHEN e_record_locked THEN
+
+   -- Someone else is part way through changing this customer. We do not wait
+   -- on their lock, we say so and let the caller decide whether to retry.
+   p_message := 'Customer ' || v_customer.customer_name
+             || ' is being changed by someone else, please try again';
 
 WHEN e_check_violated THEN
 

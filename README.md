@@ -139,6 +139,7 @@ rather than rejected as a duplicate email.
 | Phone number belongs to someone else | `Phone number +1 555 0100 already belongs to another customer` |
 | Email address has no usable `@` | `Email address a.b.zz is not a valid email address, it needs an @ with text on both sides` |
 | A mandatory column is missing | `A customer name is required`, `A phone number is required` or `An email address is required` |
+| Another session is mid-change on this customer | `Customer X is being changed by someone else, please try again` |
 
 Every outcome is a sentence, including the ones a constraint would otherwise
 report as `ORA-00001` or `ORA-02290`, so a caller has something to show a user.
