@@ -18,7 +18,6 @@ a saved config that already makes the interesting choices.
 | `db/mcp_db_demo_ddl.sql` | Tables, indexes, views, sequences, `UPSERT_CUSTOMER`, `HOTEL_OCCUPANCY` and the `ROOM_MANAGER` package |
 | `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 43 customers, 92 bookings, 7 complaints |
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
-| `db/mcp_db_demo_alter_customers.sql` | Migration for a schema created before `CUSTOMERS` had contact details |
 | `SqlStatements/*.sql` | Hand-written queries exposed as tools, one file per tool |
 | `mcpdemo.json` | A saved wizard config: which objects to expose, and how |
 
@@ -31,16 +30,19 @@ Against an empty schema:
 @db/mcp_db_demo_dml.sql
 ```
 
-To start again, run `db/mcp_db_demo_drop.sql` first.
-
-If you have an older copy of this schema, where `CUSTOMERS` has only
-`CUSTOMER_NAME`, do not re-run the DDL - it will fail on the tables that
-already exist. Run the migration instead, then the `CREATE OR REPLACE
-PROCEDURE UPSERT_CUSTOMER` section of the DDL:
+There are no migrations. This is demo data, so if you already have an older copy
+of the schema, drop it and build it again rather than trying to alter it into
+shape:
 
 ```sql
-@db/mcp_db_demo_alter_customers.sql
+@db/mcp_db_demo_drop.sql
+@db/mcp_db_demo_ddl.sql
+@db/mcp_db_demo_dml.sql
 ```
+
+The drop script drops every object the DDL creates, in an order the foreign keys
+allow. On a schema that is already empty it will report that the objects do not
+exist, which is safe to ignore.
 
 ## Running the wizard against it
 
