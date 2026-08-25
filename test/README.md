@@ -17,5 +17,6 @@ Host, service and user default to the demo database and can be overridden with
 
 - `runsql.py` - runs a SQL*Plus-style script (`;` statements, `/`-terminated
   PL/SQL blocks) and reports any objects left invalid.
-- `test_room_manager.py` - exercises `ROOM_MANAGER`. Everything it books is
-  rolled back, so the demo data is left untouched.
+- `test_room_manager.py` - exercises `ROOM_MANAGER`. It books into far-future
+  date ranges of its own and deletes them at the end (BookRoom commits, so it
+  cannot rely on rollback), leaving the demo data untouched.

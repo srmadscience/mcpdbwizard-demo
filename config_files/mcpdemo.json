@@ -5,13 +5,13 @@
   "author": "",
   "version": "1",
   "comment": "",
-  "hostname": "10.13.1.226",
+  "hostname": "endowment",
   "port": "1521",
   "oracleSid": "/FREEPDB1",
-  "user": "MCP_DEMO",
+  "user": "MCPDEMO",
   "pass": "FROM_ENV_VARIABLE_DB_PASS",
   "oracleVersion": null,
-  "otherUserName": "SYNUSER",
+  "otherUserName": "OTHERSCHEMA",
   "xSize": "800",
   "ySize": "600",
   "debugMessages": "YES",
@@ -49,10 +49,9 @@
   "mcpHttpToken": "NO",
   "mcpHttps": "NO",
   "mcpOAuth": "NO",
-  "mcpInstructions": null,
-  "prometheusServer": "NO",
+  "prometheusServer": "YES",
   "runOnStart": "YES",
-  "metricsPort": null,
+  "metricsPort": "9464",
   "webServicesAbstractBfile": "NO",
   "wsPreCallStub": "NO",
   "wsPostCallStub": "NO",
@@ -67,7 +66,7 @@
   "daoFactoryName": "DaoFactory",
   "daoEjb": "NONE",
   "daoConnectionType": "Hard coded connect string",
-  "daoConnectionName": "jdbc:oracle:thin:MCP_DEMO/FROM_ENV_VARIABLE_DB_PASS@//10.13.1.226:1521/FREEPDB1",
+  "daoConnectionName": "jdbc:oracle:thin:MCPDEMO/FROM_ENV_VARIABLE_DB_PASS@//endowment:1521/FREEPDB1",
   "commitConnections": "YES",
   "closeConnections": "NO",
   "daoPool": "YES",
@@ -89,95 +88,116 @@
   "sequences": [
     {
       "index": 0.0,
-      "name": "BOOKING_ID_SEQ",
-      "user": "MCP_DEMO"
-    },
-    {
-      "index": 1.0,
       "name": "COMPLAINT_ID_SEQ",
-      "user": "MCP_DEMO"
+      "user": "MCPDEMO"
     }
   ],
   "tables": [
     {
       "index": 0.0,
       "name": "COMPLAINTS",
-      "user": "MCP_DEMO",
-      "mcpCrud": "R"
+      "user": "MCPDEMO",
+      "mcpCrud": "CR",
+      "mcpDescriptions": {
+        "PK": "Find a complaint by complaint ID",
+        "INS": "Create a new complaint. Please manage the users expectations about outcomes.",
+        "UPD": "",
+        "DEL": ""
+      }
     },
     {
       "index": 1.0,
       "name": "CUSTOMERS",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "mcpCrud": "R"
     },
     {
       "index": 2.0,
       "name": "HOTELS",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "mcpCrud": "R"
     },
     {
       "index": 3.0,
       "name": "HOTEL_AMENITIES",
-      "user": "MCP_DEMO",
-      "mcpCrud": "R"
+      "user": "MCPDEMO",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "PK": "",
+        "INS": "",
+        "UPD": "",
+        "DEL": "",
+        "IX_HOTEL_AMENITIES_AMENITY_NAME": "This lets you find which hotels have an amenity."
+      }
     },
     {
       "index": 4.0,
       "name": "HOTEL_AMENITIES_SUMMARY",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "mcpCrud": "R"
     },
     {
       "index": 5.0,
       "name": "HOTEL_REGIONS",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "mcpCrud": "R"
     },
     {
       "index": 6.0,
       "name": "HOTEL_ROOMS",
-      "user": "MCP_DEMO",
-      "mcpCrud": "R"
+      "user": "MCPDEMO",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "PK": "",
+        "INS": "",
+        "UPD": "",
+        "DEL": "",
+        "FK_ROOM_BOOKINGS_HOTEL_ROOM": "This lets you find bookings for a specific room in a specific hotel.",
+        "IX_HOTEL_ROOMS_ROOM_IDX": "This lets you find bookings for a specific room in a specific hotel."
+      }
     },
     {
       "index": 7.0,
       "name": "ROOM_BOOKINGS",
-      "user": "MCP_DEMO",
-      "mcpCrud": "R"
+      "user": "MCPDEMO",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "PK": "",
+        "INS": "",
+        "UPD": "",
+        "DEL": ""
+      }
     }
   ],
   "procedures": [
     {
       "index": 0.0,
       "name": "BOOKROOM",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "pkg": "ROOM_MANAGER",
       "overload": null
     },
     {
       "index": 1.0,
       "name": "GETROOMLIST",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "pkg": "ROOM_MANAGER",
-      "overload": null,
-      "mcpDescription": "use this to  check availability for a specific hotel for a specific date range"
+      "overload": null
     },
     {
       "index": 2.0,
       "name": "HOTEL_OCCUPANCY",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "pkg": null,
-      "overload": null,
-      "mcpDescription": "Use this to find out if a hotel is full or not for a date range."
+      "overload": null
     },
     {
       "index": 3.0,
       "name": "UPSERT_CUSTOMER",
-      "user": "MCP_DEMO",
+      "user": "MCPDEMO",
       "pkg": null,
-      "overload": null
+      "overload": null,
+      "mcpDescription": "customer name is always upper case, and must be unique. Phone number and email must be unique if provided."
     }
   ],
   "sqlStatements": [
@@ -187,6 +207,7 @@
       "createClass": "YES",
       "turnCursorsIntoRecords": "YES",
       "params": [],
+      "mcpDescription": "This provides a list of amenities our hotels offer, including how common they are and whether they are chargable.",
       "sql": "select * from hotel_amenities_summary order by amenity_name;"
     },
     {
@@ -195,6 +216,7 @@
       "createClass": "YES",
       "turnCursorsIntoRecords": "YES",
       "params": [],
+      "mcpDescription": "A list of complaints made by a customer.",
       "sql": "select * from complaints \r\nwhere customer_name = ? /* String */\r\norder by complaint_date;"
     },
     {

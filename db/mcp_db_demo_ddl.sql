@@ -415,6 +415,7 @@ IF l_booked_room_count < p_room_count THEN
  --
  ELSE
  --
+   p_message := 'Booked '||p_room_count||' rooms.';
    COMMIT;
  --
 END IF;
