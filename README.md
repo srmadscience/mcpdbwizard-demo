@@ -98,7 +98,7 @@ demo on your own machine and not fine anywhere else.
 ```mermaid
 erDiagram
     HOTELS          ||--o{ HOTEL_AMENITIES : "offers"
-    HOTELS          ||..o{ HOTEL_ROOMS     : "has - no FK"
+    HOTELS          ||--o{ HOTEL_ROOMS     : "has"
     HOTELS          ||--o{ ROOM_BOOKINGS   : "is booked"
     HOTEL_ROOMS     ||--o{ ROOM_BOOKINGS   : "is let as"
     CUSTOMERS       ||--o{ ROOM_BOOKINGS   : "books"
@@ -119,7 +119,7 @@ erDiagram
     }
 
     HOTEL_ROOMS {
-        VARCHAR2 HOTEL_NAME            PK
+        VARCHAR2 HOTEL_NAME            PK "FK, cascades"
         NUMBER   ROOM_NUMBER           PK
         VARCHAR2 ROOM_SPECIAL_FEATURES "the only nullable column"
     }
@@ -148,11 +148,18 @@ erDiagram
     }
 ```
 
-`HOTEL_ROOMS` is the one join drawn with a dotted line, because it is the one
-that is not enforced: it shares `HOTEL_NAME` with `HOTELS` but has no foreign key
-back to it, so a room in a hotel that does not exist is currently possible.
-`ROOM_BOOKINGS` reaches `HOTEL_ROOMS` on both columns at once, and separately
-carries its own foreign key to `HOTELS`.
+Every join is a real constraint. `ROOM_BOOKINGS` reaches `HOTEL_ROOMS` on both
+columns at once, and separately carries its own foreign key to `HOTELS`.
+
+`HOTEL_ROOMS_FK1`, `HOTEL_AMENITIES_FK1` and `ROOM_BOOKINGS_HOTEL_ROOM` all
+cascade on delete, so removing a hotel is meant to take its rooms and amenities
+with it, and the rooms their bookings. Note that `ROOM_BOOKINGS` also holds a
+second, non-cascading foreign key to `HOTELS`, so deleting a hotel that still has
+bookings may raise `ORA-02292` rather than cascading cleanly. Delete the bookings
+first if you want to be sure.
+
+Nothing cascades from `CUSTOMERS`, so a customer with a booking or a complaint on
+file cannot be deleted until those go first.
 
 Two views summarise the reference data: `HOTEL_REGIONS` aggregates ratings by
 region, and `HOTEL_AMENITIES_SUMMARY` gives the percentage of hotels that charge
