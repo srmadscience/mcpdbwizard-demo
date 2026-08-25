@@ -335,7 +335,7 @@ BEGIN
 --
 p_message := 'Looking for availablity for '||p_hotel_name||p_from_date||' to '||p_to_date;
 --
-IF p_hotel_name IS NULL OR LTRIM(RTRIM(p_hotel_name)) = 0 THEN
+IF p_hotel_name IS NULL OR LENGTH(LTRIM(RTRIM(p_hotel_name))) = 0 THEN
 --
   p_message := 'Hotel Name Needed';
 --
