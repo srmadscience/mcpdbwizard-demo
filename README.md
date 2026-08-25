@@ -154,11 +154,11 @@ Every join is a real constraint. `ROOM_BOOKINGS` reaches `HOTEL_ROOMS` on both
 columns at once, and separately carries its own foreign key to `HOTELS`.
 
 `HOTEL_ROOMS_FK1`, `HOTEL_AMENITIES_FK1` and `ROOM_BOOKINGS_HOTEL_ROOM` all
-cascade on delete, so removing a hotel is meant to take its rooms and amenities
-with it, and the rooms their bookings. Note that `ROOM_BOOKINGS` also holds a
-second, non-cascading foreign key to `HOTELS`, so deleting a hotel that still has
-bookings may raise `ORA-02292` rather than cascading cleanly. Delete the bookings
-first if you want to be sure.
+cascade on delete, so deleting a hotel takes its rooms and amenities with it, and
+the rooms take their bookings. `ROOM_BOOKINGS` also holds a second, non-cascading
+foreign key straight to `HOTELS`, but it does not get in the way: the room cascade
+has already removed the bookings by the time that constraint is checked, so the
+delete goes through cleanly.
 
 Nothing cascades from `CUSTOMERS`, so a customer with a booking or a complaint on
 file cannot be deleted until those go first.
