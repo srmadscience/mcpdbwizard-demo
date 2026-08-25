@@ -333,7 +333,7 @@ PROCEDURE  getRoomList
 --
 BEGIN
 --
-p_message := 'Looking for availablity for '||p_hotel_name||p_from_date||' to '||p_to_date;
+p_message := 'Looking for availability for '||p_hotel_name||p_from_date||' to '||p_to_date;
 --
 IF p_hotel_name IS NULL OR LENGTH(LTRIM(RTRIM(p_hotel_name))) = 0 THEN
 --
@@ -392,7 +392,7 @@ getRoomList
 --
  FOR room IN l_room_cursor
   LOOP
-      INSERT INTO room_bookings 
+     INSERT INTO room_bookings
      (booking_id, hotel_name, customer_name, room_number, start_date, end_date)
      VALUES
      (booking_id_seq.nextval, UPPER(LTRIM(RTRIM(p_hotel_name))) 
@@ -412,7 +412,11 @@ IF l_booked_room_count < p_room_count THEN
 --
   p_message := 'Unable to book '||p_room_count||' rooms. Only '||l_booked_room_count||' available. Nothing booked.';
   ROLLBACK;
-  --
+ --
+ ELSE
+ --
+   COMMIT;
+ --
 END IF;
 --
 -- Note that if the loop failed we *still* return a list of bookings, as

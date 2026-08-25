@@ -242,3 +242,5 @@ INSERT INTO complaints (customer_name, complaint_text) VALUES ('MR FOX','My room
 INSERT INTO complaints (customer_name, complaint_text) VALUES ('SUZY BISHOP','The lookout tower was built by twelve year olds without adult supervision. I have inspected it and I concur');
 INSERT INTO complaints (customer_name, complaint_text, complaint_date, resolved_y_or_n) VALUES ('AUGIE STEENBECK','An alien removed the meteorite from the crater during my stay. The front desk denies all knowledge',DATE '2026-08-25','Y');
 INSERT INTO complaints (customer_name, complaint_text, complaint_date, resolved_y_or_n) VALUES ('MARGOT TENENBAUM','The bath is yellow, enormous, and suitable for two. I was travelling alone',DATE '2026-09-15','Y');
+
+COMMIT;
