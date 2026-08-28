@@ -49,7 +49,7 @@
   "mcpHttpToken": "NO",
   "mcpHttps": "NO",
   "mcpOAuth": "NO",
-  "mcpInstructions": null,
+  "mcpInstructions": "This is hotel room booking system for a boutique hotel chain. It does not allow direct SQL access. You must either confirm the existence of a customer before making a booking, or create a customer before you create the booking.",
   "prometheusServer": "YES",
   "runOnStart": "YES",
   "metricsPort": "9464",
@@ -176,7 +176,8 @@
       "name": "BOOKROOM",
       "user": "MCPDEMO",
       "pkg": "ROOM_MANAGER",
-      "overload": null
+      "overload": null,
+      "mcpDescription": "The customer must exist before you call this. Note that if the customer already has a booking, that may be returned, even if this booking didn't work."
     },
     {
       "index": 1.0,
@@ -222,6 +223,15 @@
     },
     {
       "index": 2.0,
+      "filename": "hotelList.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "mcpDescription": "Use this to get a list of all hotels.",
+      "sql": "SELECT * FROM hotels ORDER BY hotel_name;"
+    },
+    {
+      "index": 3.0,
       "filename": "region_list.sql",
       "createClass": "YES",
       "turnCursorsIntoRecords": "YES",
@@ -229,7 +239,7 @@
       "sql": "select * from hotel_regions order by region_name;"
     },
     {
-      "index": 3.0,
+      "index": 4.0,
       "filename": "stays_per_customer.sql",
       "createClass": "YES",
       "turnCursorsIntoRecords": "YES",
