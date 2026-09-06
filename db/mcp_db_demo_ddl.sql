@@ -53,8 +53,8 @@ CREATE TABLE "ROOM_BOOKINGS"
        "END_DATE"      DATE              NOT NULL ENABLE,
        CONSTRAINT "ROOM_BOOKINGS_PK" PRIMARY KEY ("BOOKING_ID") USING INDEX ENABLE,
        CONSTRAINT "START_BEFORE_END" CHECK (START_DATE < END_DATE) ENABLE,
-       CONSTRAINT "ROOM_BOOKINGS_START_IS_MIDNIGHT" CHECK (START_DATE = TRUNC(START_DATE)) ENABLE,
-       CONSTRAINT "ROOM_BOOKINGS_END_IS_MIDNIGHT" CHECK (END_DATE = TRUNC(END_DATE)) ENABLE,
+       CONSTRAINT "ROOM_BOOKINGS_START_MIDNIGHT" CHECK (START_DATE = TRUNC(START_DATE)) ENABLE,
+       CONSTRAINT "ROOM_BOOKINGS_END_MIDNIGHT" CHECK (END_DATE = TRUNC(END_DATE)) ENABLE,
        CONSTRAINT "ROOM_BOOKINGS_HOTEL_ROOM" FOREIGN KEY ("HOTEL_NAME", "ROOM_NUMBER")
           REFERENCES "HOTEL_ROOMS" ("HOTEL_NAME", "ROOM_NUMBER") ON DELETE CASCADE ENABLE,
        CONSTRAINT "ROOM_BOOKINGS_FK1" FOREIGN KEY ("HOTEL_NAME")
@@ -107,7 +107,7 @@ SELECT AMENITY_NAME
 FROM   HOTEL_AMENITIES
 GROUP BY AMENITY_NAME;
 
-CREATE SEQUENCE "BOOKING_ID_SEQ" MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 10000 CACHE 20 NOORDER NOCYCLE NOKEEP NOSCALE GLOBAL;
+CREATE SEQUENCE "BOOKING_ID_SEQ" MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 10000 CACHE 20 NOORDER NOCYCLE;
 
 CREATE OR REPLACE PROCEDURE UPSERT_CUSTOMER
    ( p_customer IN  CUSTOMERS%ROWTYPE
@@ -380,6 +380,8 @@ PROCEDURE BookRoom
 l_room_cursor RoomCursor;
 l_room_message varchar2(2048);
 l_booked_room_count integer := 0;
+-- A cursor FOR loop over a cursor VARIABLE needs 21c; fetching explicitly works on 12c up.
+l_room hotel_rooms%ROWTYPE;
 --
 BEGIN
 --
@@ -390,13 +392,15 @@ getRoomList
    , l_room_cursor  
    , l_room_message);
 --
- FOR room IN l_room_cursor
-  LOOP
+ LOOP
+     FETCH l_room_cursor INTO l_room;
+     EXIT WHEN l_room_cursor%NOTFOUND;
+     --
      INSERT INTO room_bookings
      (booking_id, hotel_name, customer_name, room_number, start_date, end_date)
      VALUES
      (booking_id_seq.nextval, UPPER(LTRIM(RTRIM(p_hotel_name))) 
-    ,UPPER(LTRIM(RTRIM(p_customer_name))), room.room_number,  p_from_date, p_to_date);  
+    ,UPPER(LTRIM(RTRIM(p_customer_name))), l_room.room_number,  p_from_date, p_to_date);  
     --
     l_booked_room_count := l_booked_room_count + 1;
     --
@@ -407,7 +411,9 @@ getRoomList
     END IF;
     --
 END LOOP;
--- 
+--
+CLOSE l_room_cursor;
+--
 IF l_booked_room_count < p_room_count THEN
 --
   p_message := 'Unable to book '||p_room_count||' rooms. Only '||l_booked_room_count||' available. Nothing booked.';
