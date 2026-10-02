@@ -20,6 +20,7 @@ a saved config that already makes the interesting choices.
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
 | `SqlStatements/*.sql` | Hand-written queries exposed as tools, one file per tool |
 | `mcpdemo.json` | A saved wizard config: which objects to expose, and how |
+| `config/mcpdemo_customer.json` | A second config for a **customer-facing** agent: one customer per connection, chosen by the URL |
 
 ## Installing
 
@@ -375,3 +376,52 @@ when it is deciding whether this is the tool it wants:
 The config never stores a password. `pass` and the connection string both carry
 the literal `FROM_ENV_VARIABLE_DB_PASS`, and the real password arrives in the
 container's environment.
+
+## The customer config
+
+`config/mcpdemo_customer.json` is the same schema seen from the other side of the
+desk. `mcpdemo.json` is a **staff** view: its tools take a customer name, so an
+agent using it can book for, or read about, anybody. That is right for a front desk
+and wrong for a customer.
+
+The customer config exposes:
+
+- **`CUSTOMER_PORTAL`**: `my_details`, `my_bookings`, `book_rooms`,
+  `cancel_booking`, `my_complaints`, `add_complaint`
+- **`ROOM_MANAGER.GETROOMLIST`**, to check availability
+- **`HOTELS`, `HOTEL_AMENITIES`, `HOTEL_ROOMS`**, read only
+- the **amenity, hotel and region lists**
+
+and nothing that names a customer: no `BOOKROOM`, no `UPSERT_CUSTOMER`, no
+`CUSTOMERS`, `ROOM_BOOKINGS` or `COMPLAINTS` tables, no per-customer queries.
+
+**No tool takes a customer name.** `CUSTOMER_PORTAL` reads the customer from
+`SYS_CONTEXT('MCP', 'CUSTOMER_NAME')`, and the config declares `CUSTOMER_NAME` as a
+URL context parameter, so MCP DB Wizard sets it before every call from the
+connection URL:
+
+```
+https://<host>/mcp/<owner>/mcpdemo_customer?CUSTOMER_NAME=SUZY%20BISHOP
+```
+
+The agent never sees that URL and has no argument it could change to reach somebody
+else. Cancelling another customer's booking is answered exactly as a booking that
+does not exist, so it cannot be used to probe for them either.
+
+**What this protects against is the agent, not the person.** Whoever can edit the
+MCP client's configuration can change the URL. For a customer-facing deployment,
+that configuration belongs to you, not to the customer.
+
+It needs MCP DB Wizard's `MCP` application context in the database, installed once
+by a DBA (`app/db/mcp-context/install.sql` in the MCP DB Wizard repository), and
+the schema's account granted it:
+
+```sql
+@install.sql
+@grant.sql MCPDEMO
+```
+
+Without them the generated server refuses to start and says which script to run.
+`CUSTOMER_PORTAL` itself compiles anywhere: with no context, every call is refused
+with `ORA-20100`, and an unknown customer with `ORA-20101`.
+

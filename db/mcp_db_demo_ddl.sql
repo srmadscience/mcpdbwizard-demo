@@ -440,3 +440,160 @@ END;
 
 
 
+
+--
+-- CUSTOMER_PORTAL: what a CUSTOMER-facing agent may do -- for one customer, and only that one.
+--
+-- The customer is never a parameter. It comes from SYS_CONTEXT('MCP', 'CUSTOMER_NAME'), which an
+-- MCP DB Wizard server sets before every tool call from its connection URL:
+--
+--     https://<host>/mcp/<owner>/<config>?CUSTOMER_NAME=SUZY%20BISHOP
+--
+-- No procedure below takes a customer name, so an agent has nothing it could change to reach
+-- someone else's bookings. Compare ROOM_MANAGER.BookRoom, which takes p_customer_name and so
+-- belongs in the staff config, not this one.
+--
+-- It compiles on any database. Without the MCP context installed (see MCP DB Wizard's
+-- app/db/mcp-context/install.sql), SYS_CONTEXT('MCP', ...) is simply NULL and every call here is
+-- refused -- which is the right failure.
+--
+create or replace PACKAGE customer_portal AS
+--
+-- A SUBTYPE of ROOM_MANAGER's, not a new REF CURSOR type: book_rooms hands BookRoom's cursor
+-- straight back, and two separately declared cursor types are not assignable to each other.
+SUBTYPE BookingCursor IS room_manager.BookingCursor;
+TYPE ComplaintCursor IS REF CURSOR RETURN complaints%ROWTYPE;
+--
+-- The connected customer's own contact details.
+PROCEDURE my_details
+   ( p_customer_name OUT VARCHAR2
+   , p_phone_number  OUT VARCHAR2
+   , p_email_address OUT VARCHAR2);
+--
+-- Every booking the connected customer holds, soonest first.
+PROCEDURE my_bookings
+   ( p_bookings OUT BookingCursor);
+--
+-- Book rooms for the connected customer. Same rules as ROOM_MANAGER.BookRoom: all or nothing.
+PROCEDURE book_rooms
+   ( p_hotel_name IN  VARCHAR2
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_room_count IN  NATURAL
+   , p_bookings   OUT BookingCursor
+   , p_message    OUT VARCHAR2);
+--
+-- Cancel one of the connected customer's bookings. A booking id that belongs to someone else
+-- gets exactly the same answer as one that does not exist, so this cannot be used to probe.
+PROCEDURE cancel_booking
+   ( p_booking_id IN  NUMBER
+   , p_message    OUT VARCHAR2);
+--
+-- The connected customer's complaints, oldest first.
+PROCEDURE my_complaints
+   ( p_complaints OUT ComplaintCursor);
+--
+-- Record a complaint from the connected customer.
+PROCEDURE add_complaint
+   ( p_complaint_text IN  VARCHAR2
+   , p_complaint_id   OUT NUMBER);
+--
+END;
+/
+
+create or replace PACKAGE BODY customer_portal AS
+--
+-- The one place the customer comes from. Refuses, rather than returning NULL, when there is no
+-- customer or the customer does not exist: a NULL here would match nothing in some queries and
+-- everything in a careless one. Callers copy it into a local before any SQL: a package-private
+-- function cannot be called from inside a SQL statement (PLS-00231).
+FUNCTION current_customer RETURN VARCHAR2 IS
+  l_name  VARCHAR2(4000) := UPPER(LTRIM(RTRIM(SYS_CONTEXT('MCP', 'CUSTOMER_NAME', 4000))));
+  l_count NUMBER;
+BEGIN
+  IF l_name IS NULL THEN
+    raise_application_error(-20100,
+      'No customer. Connect with ?CUSTOMER_NAME=<your name> on the MCP server URL.');
+  END IF;
+  SELECT COUNT(*) INTO l_count FROM customers WHERE customer_name = l_name;
+  IF l_count = 0 THEN
+    raise_application_error(-20101, 'Customer ' || l_name || ' is not known to this hotel chain.');
+  END IF;
+  RETURN l_name;
+END;
+--
+PROCEDURE my_details
+   ( p_customer_name OUT VARCHAR2
+   , p_phone_number  OUT VARCHAR2
+   , p_email_address OUT VARCHAR2) IS
+  l_customer VARCHAR2(4000) := current_customer;
+BEGIN
+  SELECT customer_name, phone_number, email_address
+    INTO p_customer_name, p_phone_number, p_email_address
+    FROM customers
+   WHERE customer_name = l_customer;
+END;
+--
+PROCEDURE my_bookings
+   ( p_bookings OUT BookingCursor) IS
+  l_customer VARCHAR2(4000) := current_customer;
+BEGIN
+  OPEN p_bookings FOR
+    SELECT b.*
+      FROM room_bookings b
+     WHERE b.customer_name = l_customer
+     ORDER BY b.start_date, b.booking_id;
+END;
+--
+PROCEDURE book_rooms
+   ( p_hotel_name IN  VARCHAR2
+   , p_from_date  IN  DATE
+   , p_to_date    IN  DATE
+   , p_room_count IN  NATURAL
+   , p_bookings   OUT BookingCursor
+   , p_message    OUT VARCHAR2) IS
+BEGIN
+  room_manager.BookRoom(p_hotel_name, current_customer, p_from_date, p_to_date,
+                        p_room_count, p_bookings, p_message);
+END;
+--
+PROCEDURE cancel_booking
+   ( p_booking_id IN  NUMBER
+   , p_message    OUT VARCHAR2) IS
+  l_customer VARCHAR2(4000) := current_customer;
+BEGIN
+  DELETE FROM room_bookings
+   WHERE booking_id = p_booking_id
+     AND customer_name = l_customer;
+  IF SQL%ROWCOUNT = 0 THEN
+    p_message := 'You have no booking ' || p_booking_id || '.';
+  ELSE
+    p_message := 'Cancelled booking ' || p_booking_id || '.';
+    COMMIT;
+  END IF;
+END;
+--
+PROCEDURE my_complaints
+   ( p_complaints OUT ComplaintCursor) IS
+  l_customer VARCHAR2(4000) := current_customer;
+BEGIN
+  OPEN p_complaints FOR
+    SELECT c.*
+      FROM complaints c
+     WHERE c.customer_name = l_customer
+     ORDER BY c.complaint_date, c.complaint_id;
+END;
+--
+PROCEDURE add_complaint
+   ( p_complaint_text IN  VARCHAR2
+   , p_complaint_id   OUT NUMBER) IS
+  l_customer VARCHAR2(4000) := current_customer;
+BEGIN
+  INSERT INTO complaints (customer_name, complaint_text)
+  VALUES (l_customer, p_complaint_text)
+  RETURNING complaint_id INTO p_complaint_id;
+  COMMIT;
+END;
+--
+END;
+/

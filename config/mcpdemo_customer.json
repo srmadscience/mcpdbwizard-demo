@@ -1,0 +1,215 @@
+{
+  "productVersion": null,
+  "productBuild": null,
+  "uiname": "Metal",
+  "author": "",
+  "version": "1",
+  "comment": "",
+  "hostname": "endowment",
+  "port": "1521",
+  "oracleSid": "/FREEPDB1",
+  "user": "MCPDEMO",
+  "pass": "FROM_ENV_VARIABLE_DB_PASS",
+  "oracleVersion": null,
+  "otherUserName": "",
+  "xSize": "800",
+  "ySize": "600",
+  "debugMessages": "YES",
+  "otherMessages": "YES",
+  "codeComments": "YES",
+  "userObjects": "YES",
+  "otherObjects": "NO",
+  "methodsByte": "YES",
+  "methodsByteObj": "YES",
+  "methodsShort": "YES",
+  "methodsShortObj": "YES",
+  "methodsInt": "YES",
+  "methodsIntObj": "YES",
+  "methodsLong": "YES",
+  "methodsLongObj": "YES",
+  "methodsFloat": "YES",
+  "methodsFloatObj": "YES",
+  "methodsDouble": "YES",
+  "methodsDoubleObj": "YES",
+  "validate": "YES",
+  "extraSql": "YES",
+  "packageName": "com.mcpdbwizard.customerportal",
+  "codeBaseDirectory": "generated-src",
+  "codeBaseDirectoryFrozen": "NO",
+  "sqlFileDirectory": "/data/sqltext/mcpdemo_customer",
+  "codeStatistics": "YES",
+  "javaAccessType": "public",
+  "javaNamingConvention": "InitialCapitalLetters.java",
+  "targetJvm": "21",
+  "methodSqlPrefix": "",
+  "methodPlsqlPrefix": "",
+  "extraClassCode": "",
+  "webServices": "YES",
+  "mcpServer": "YES",
+  "mcpHttpToken": "NO",
+  "mcpHttps": "NO",
+  "mcpOAuth": "NO",
+  "mcpInstructions": "This is the customer-facing booking assistant for a boutique hotel chain. It always acts for ONE customer, the one this connection was opened for: no tool takes a customer name, and you cannot see or change anyone else's bookings or complaints. Use my_details to learn who that is. To book, check availability with getroomlist first, then call book_rooms. There is no direct SQL access.",
+  "prometheusServer": "YES",
+  "runOnStart": "NO",
+  "metricsPort": "9464",
+  "webServicesAbstractBfile": "NO",
+  "wsPreCallStub": "NO",
+  "wsPostCallStub": "NO",
+  "wsAlwaysRelease": "NO",
+  "wsRecordType": "public, no access methods",
+  "wsNumberType": "java.math.BigDecimal",
+  "wsInterfaceName": "DaoFactoryServiceInterface",
+  "wsImplName": "DaoFactoryServiceImpl",
+  "daoFinalize": "NO",
+  "daoLogType": "Console Log",
+  "daoLogName": "mcp",
+  "daoFactoryName": "DaoFactory",
+  "daoEjb": "NONE",
+  "daoConnectionType": "Hard coded connect string",
+  "daoConnectionName": "jdbc:oracle:thin:MCPDEMO/FROM_ENV_VARIABLE_DB_PASS@//endowment:1521/FREEPDB1",
+  "commitConnections": "YES",
+  "closeConnections": "NO",
+  "daoPool": "YES",
+  "daoPoolMaxSize": "10",
+  "daoPoolMinIdle": "1",
+  "daoPoolMaxWaitMs": "30000",
+  "daoPoolIdleTimeoutMs": "300000",
+  "daoPoolOnReturn": "COMMIT",
+  "ec30ProjectPath": null,
+  "ec30RelPath": null,
+  "defaultTempdir": "user.dir",
+  "defaultTempPrefix": "OSOFT",
+  "defaultTempSuffix": ".tmp",
+  "postScriptName": "",
+  "postScriptContent": "",
+  "xwsType": "NONE",
+  "xwsIface": "",
+  "xmsImpl": "",
+  "sequences": [],
+  "tables": [
+    {
+      "index": 0.0,
+      "name": "HOTELS",
+      "user": "MCPDEMO",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 1.0,
+      "name": "HOTEL_AMENITIES",
+      "user": "MCPDEMO",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "PK": "",
+        "INS": "",
+        "UPD": "",
+        "DEL": "",
+        "IX_HOTEL_AMENITIES_AMENITY_NAME": "This lets you find which hotels have an amenity."
+      }
+    },
+    {
+      "index": 2.0,
+      "name": "HOTEL_ROOMS",
+      "user": "MCPDEMO",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "PK": "",
+        "INS": "",
+        "UPD": "",
+        "DEL": ""
+      }
+    }
+  ],
+  "procedures": [
+    {
+      "index": 0.0,
+      "name": "GETROOMLIST",
+      "user": "MCPDEMO",
+      "pkg": "ROOM_MANAGER",
+      "overload": null
+    },
+    {
+      "index": 1.0,
+      "name": "MY_DETAILS",
+      "user": "MCPDEMO",
+      "pkg": "CUSTOMER_PORTAL",
+      "overload": null,
+      "mcpDescription": "Who this conversation is for: the connected customer's name, phone number and email address. Takes no arguments."
+    },
+    {
+      "index": 2.0,
+      "name": "MY_BOOKINGS",
+      "user": "MCPDEMO",
+      "pkg": "CUSTOMER_PORTAL",
+      "overload": null,
+      "mcpDescription": "Every booking the connected customer holds, soonest first. Takes no arguments."
+    },
+    {
+      "index": 3.0,
+      "name": "BOOK_ROOMS",
+      "user": "MCPDEMO",
+      "pkg": "CUSTOMER_PORTAL",
+      "overload": null,
+      "mcpDescription": "Book rooms for the connected customer. All or nothing: if fewer rooms are free than asked for, nothing is booked and p_message says so. Check availability with getroomlist first. Dates are whole days."
+    },
+    {
+      "index": 4.0,
+      "name": "CANCEL_BOOKING",
+      "user": "MCPDEMO",
+      "pkg": "CUSTOMER_PORTAL",
+      "overload": null,
+      "mcpDescription": "Cancel one of the connected customer's bookings by booking id. A booking that is not theirs is reported as not found."
+    },
+    {
+      "index": 5.0,
+      "name": "MY_COMPLAINTS",
+      "user": "MCPDEMO",
+      "pkg": "CUSTOMER_PORTAL",
+      "overload": null,
+      "mcpDescription": "The connected customer's complaints, oldest first. Takes no arguments."
+    },
+    {
+      "index": 6.0,
+      "name": "ADD_COMPLAINT",
+      "user": "MCPDEMO",
+      "pkg": "CUSTOMER_PORTAL",
+      "overload": null,
+      "mcpDescription": "Record a complaint from the connected customer and return its complaint id. Please manage their expectations about outcomes."
+    }
+  ],
+  "sqlStatements": [
+    {
+      "index": 0.0,
+      "filename": "amenity_list.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "mcpDescription": "This provides a list of amenities our hotels offer, including how common they are and whether they are chargable.",
+      "sql": "select * from hotel_amenities_summary order by amenity_name;"
+    },
+    {
+      "index": 1.0,
+      "filename": "hotelList.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "mcpDescription": "Use this to get a list of all hotels.",
+      "sql": "SELECT * FROM hotels ORDER BY hotel_name;"
+    },
+    {
+      "index": 2.0,
+      "filename": "region_list.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "select * from hotel_regions order by region_name;"
+    }
+  ],
+  "mcpContextParams": [
+    {
+      "index": 1.0,
+      "name": "CUSTOMER_NAME"
+    }
+  ],
+  "extraProperties": {}
+}
