@@ -18,8 +18,8 @@ a saved config that already makes the interesting choices.
 | `db/mcp_db_demo_ddl.sql` | Tables, indexes, views, sequences, `UPSERT_CUSTOMER`, `HOTEL_OCCUPANCY` and the `ROOM_MANAGER` package |
 | `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 43 customers, 92 bookings, 7 complaints |
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
-| `SqlStatements/*.sql` | Hand-written queries exposed as tools, one file per tool |
-| `mcpdemo.json` | A saved wizard config: which objects to expose, and how |
+| `sql/*.sql` | Four of the hand-written queries exposed as tools, one file per tool, for reading. The config carries its own copy of every statement |
+| `config/mcpdemo.json` | A saved wizard config: which objects to expose, and how |
 | `config/mcpdemo_customer.json` | A second config for a **customer-facing** agent: one customer per connection, chosen by the URL |
 
 ## Installing
@@ -64,9 +64,8 @@ docker run -d --name mcpdbwizard \
 ```
 
 The leading `/` on the SID is what makes it a service name rather than a SID.
-Then open `http://localhost:8080`, upload `mcpdemo.json` on the Configs tab, and
-put the four files from `SqlStatements/` where the config expects them - it looks
-in `/data/sqltext/mcpdemo`, which is inside the `/data` volume mounted above.
+Then open `http://localhost:8080` and upload `config/mcpdemo.json` on the Configs tab. The
+config carries the text of its SQL statements inside it, so there is nothing else to copy.
 
 Generate and run from the Runtime page. The generated server starts on the next
 free loopback port in 8090-8109, but clients connect through the proxy on 8080,
@@ -355,22 +354,25 @@ any case and still match what is stored.
 `mcpdemo.json` is a saved config, in the format the Configs tab downloads. It
 selects:
 
-- **8 tables and views**, every one of them `"mcpCrud": "R"`. Read only: create,
-  update and delete are per-table ticks and none of them are ticked here
-- **2 sequences**, `BOOKING_ID_SEQ` and `COMPLAINT_ID_SEQ`
+- **8 tables and views**. Seven are `"mcpCrud": "R"` (read only: create, update and
+  delete are per-table ticks); `COMPLAINTS` is `"CR"`, so an agent can also record a
+  complaint
+- **1 sequence**, `COMPLAINT_ID_SEQ`
 - **4 procedures**: `ROOM_MANAGER.GETROOMLIST`, `ROOM_MANAGER.BOOKROOM`,
   `HOTEL_OCCUPANCY` and `UPSERT_CUSTOMER`
-- **4 SQL statements**, the files in `SqlStatements/`
+- **5 SQL statements**: the four in `sql/`, plus `hotelList.sql`, which exists only
+  inside the config (`SELECT * FROM hotels ORDER BY hotel_name;`)
 
-So the only ways to change anything are the procedures, which is the point: the
-writes that exist are the ones that enforce their own rules.
+So apart from recording a complaint, the only ways to change anything are the
+procedures, which is the point: the writes that exist are the ones that enforce
+their own rules.
 
 Two of the procedures carry an `mcpDescription`, which is what the agent reads
 when it is deciding whether this is the tool it wants:
 
 ```json
-{ "name": "GETROOMLIST", "pkg": "ROOM_MANAGER",
-  "mcpDescription": "use this to  check availability for a specific hotel for a specific date range" }
+{ "name": "BOOKROOM", "pkg": "ROOM_MANAGER",
+  "mcpDescription": "The customer must exist before you call this. Note that if the customer already has a booking, that may be returned, even if this booking didn't work." }
 ```
 
 The config never stores a password. `pass` and the connection string both carry
