@@ -20,7 +20,7 @@ a saved config that already makes the interesting choices.
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
 | `sql/*.sql` | Four of the hand-written queries exposed as tools, one file per tool, for reading. The config carries its own copy of every statement |
 | `config/mcpdemo.json` | A saved wizard config: which objects to expose, and how |
-| `config/mcpdemo_customer.json` | A second config for a **customer-facing** agent: one customer per connection, chosen by the URL |
+| `config/mcpdemo_customer.json` | A second config for a **customer-facing** agent: [Context Pinning](https://mcpdbwizard.com/docs/context-pinning/), one customer per connection, chosen by the URL |
 
 ## Installing
 
