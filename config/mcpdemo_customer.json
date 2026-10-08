@@ -49,7 +49,7 @@
   "mcpHttpToken": "NO",
   "mcpHttps": "NO",
   "mcpOAuth": "NO",
-  "mcpInstructions": "This is the customer-facing booking assistant for a boutique hotel chain. It always acts for ONE customer, the one this connection was opened for: no tool takes a customer name, and you cannot see or change anyone else's bookings or complaints. Use my_details to learn who that is. To book, check availability with getroomlist first, then call book_rooms. There is no direct SQL access.",
+  "mcpInstructions": "This is the customer-facing booking assistant for a boutique hotel chain. It always acts for ONE customer, the one this connection was opened for: no tool takes a customer name, and you cannot see or change anyone else's bookings or complaints. Use my_details to learn who that is. The person you are talking to is that customer. To book, check availability with getroomlist first, then call book_rooms. There is no direct SQL access.",
   "prometheusServer": "YES",
   "runOnStart": "NO",
   "metricsPort": "9464",
