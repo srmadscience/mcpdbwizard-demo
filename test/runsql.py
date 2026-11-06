@@ -32,7 +32,11 @@ def statements(text):
                 yield '\n'.join(buf).strip()
                 buf, in_plsql = [], False
             continue
-        if not buf and not stripped:
+        # Comment lines BEFORE a statement are dropped, not buffered. Buffered, they became the
+        # statement's first line, so a CREATE PACKAGE under a comment block was never recognised as
+        # PL/SQL and was cut at its first ';' -- which is how CUSTOMER_PORTAL failed to load on
+        # every run of the AWS demo from 17767c9 on, while SQL*Plus loads had no such problem.
+        if not buf and (not stripped or stripped.startswith('--')):
             continue
         if not buf and PLSQL_START.match(line):
             in_plsql = True
